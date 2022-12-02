@@ -11,6 +11,11 @@ pub fn read_to_eof_line() -> String {
             accu.truncate(accu.len() - 4);
             return accu;
         }
+
+        if line_length == 5 && accu.ends_with("EOF\r\n") {
+            accu.truncate(accu.len() - 5);
+            return accu;
+        }
     }
 }
 
