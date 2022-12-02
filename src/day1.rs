@@ -48,5 +48,7 @@ pub fn solve() {
             println!("Part 1: {}", supplies[supplies.len() - 1]);
             println!("Part 2: {}", supplies[supplies.len() - 3] + supplies[supplies.len() - 2] + supplies[supplies.len() - 1]);
         }
+    } else {
+        println!("Wonky puzzle input");
     }
 }
