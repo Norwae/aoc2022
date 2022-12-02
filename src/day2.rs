@@ -2,7 +2,7 @@ use nom::character::complete::{line_ending, one_of, space1};
 use nom::combinator::map;
 use nom::IResult;
 use nom::multi::many1;
-use nom::sequence::{separated_pair, terminated, tuple};
+use nom::sequence::{separated_pair, terminated};
 use crate::util::read_to_eof_line;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -18,13 +18,22 @@ impl Outcome {
     }
 }
 
+macro_rules! outcome_match {
+    ($matched:expr, $lose:expr, $tie:expr, $win:expr) => {
+        match $matched {
+            Outcome::Lose => $lose,
+            Outcome::Tie => $tie,
+            Outcome::Win => $win
+        }
+    };
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum RPS {
     Rock,
     Paper,
     Scissors,
 }
-
 
 macro_rules! rps_match {
     ($matched:expr, $rock:expr, $paper:expr, $scissors:expr) => {
@@ -46,21 +55,11 @@ impl RPS {
     }
 
     fn countermove_for_outcome(self, outcome: Outcome) -> RPS {
-        rps_match!(self, match outcome {
-            Outcome::Win => RPS::Paper,
-            Outcome::Tie => RPS::Rock,
-            Outcome::Lose => RPS::Scissors
-        },
-        match outcome {
-            Outcome::Win => RPS::Scissors,
-            Outcome::Tie => RPS::Paper,
-            Outcome::Lose => RPS::Rock
-        },
-        match outcome {
-            Outcome::Win => RPS::Rock,
-            Outcome::Tie => RPS::Scissors,
-            Outcome::Lose => RPS::Paper
-        })
+        rps_match!(self,
+            outcome_match!(outcome, RPS::Paper, RPS::Rock, RPS::Scissors),
+            outcome_match!(outcome, RPS::Scissors, RPS::Paper, RPS::Rock),
+            outcome_match!(outcome, RPS::Rock, RPS::Scissors,RPS::Paper)
+        )
     }
 
     fn score(self) -> i64 {
@@ -95,7 +94,7 @@ fn rps_outcome(input: &str) -> IResult<&str, Outcome> {
             'Y' => Outcome::Tie,
             'Z' => Outcome::Win,
             _ => unreachable!()
-        }
+        },
     )(input)
 }
 
@@ -108,7 +107,7 @@ fn rps_move_outcome_line(input: &str) -> IResult<&str, (RPS, RPS)> {
 
     map(
         parse_move_outcome,
-        |(mve, outcome)| (mve, mve.countermove_for_outcome(outcome))
+        |(mve, outcome)| (mve, mve.countermove_for_outcome(outcome)),
     )(input)
 }
 
@@ -124,7 +123,7 @@ pub fn solve() {
     let input = read_to_eof_line();
     if let Ok(("", strat)) = round_1_strategy(&input) {
         let score = strat.iter().fold(0i64, |sum, next|
-            sum + score_round(next.0, next.1)
+            sum + score_round(next.0, next.1),
         );
 
         println!("Part 1: Expected score {}", score)
@@ -132,7 +131,7 @@ pub fn solve() {
 
     if let Ok(("", strat)) = round_2_strategy(&input) {
         let score = strat.iter().fold(0i64, |sum, next|
-            sum + score_round(next.0, next.1)
+            sum + score_round(next.0, next.1),
         );
 
         println!("Part 2: Expected score {}", score)

@@ -3,30 +3,25 @@ use std::io::stdin;
 
 pub fn read_to_eof_line() -> String {
     let mut accu = String::new();
-    let mut buf = String::new();
 
     loop {
-        buf.clear();
-        stdin().read_line(&mut buf).expect("IO error");
-        if buf == "EOF\n" || buf == "EOF\r\n" {
-            break;
-        } else {
-            accu.push_str(&buf)
+        let line_length = stdin().read_line(&mut accu).expect("IO error");
+
+        if line_length == 4 && accu.ends_with("EOF\n") {
+            accu.truncate(accu.len() - 4);
+            return accu;
         }
     }
-
-    accu
 }
 
 pub fn read_usize(prompt: &str) -> usize {
     let mut buf = String::new();
-    let mut parsed: Option<usize> = None;
 
     loop {
         println!("{}", prompt);
         buf.clear();
         stdin().read_line(&mut buf).expect("IO error");
-        parsed = buf.trim().parse().ok();
+        let parsed = buf.trim().parse().ok();
 
         if let Some(value) = parsed {
             return value;

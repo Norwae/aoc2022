@@ -1,6 +1,4 @@
-use std::io::stdin;
-
-use nom::{character, IResult};
+use nom::IResult;
 use nom::character::complete::{digit1, line_ending};
 use nom::combinator::map;
 use nom::multi::{many1, separated_list1};
@@ -38,7 +36,6 @@ fn puzzle_input(input: &str) -> IResult<&str, Vec<Elf>> {
 
 pub fn solve() {
     let input = crate::util::read_to_eof_line();
-    println!("{}", &input);
     if let Ok(("", parsed_input)) = puzzle_input(&input) {
         if parsed_input.len() < 3 {
             println!("Too few elves");
