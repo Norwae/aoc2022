@@ -15,7 +15,7 @@ fn charcode(ch: char) -> i32 {
 
     let ch = ch as i32;
 
-    if  ch >= ACODE && ch <= ZCODE{
+    if ch >= ACODE && ch <= ZCODE {
         ch - ACODE + 1
     } else if ch >= CACODE && ch <= CZCODE {
         ch - CACODE + 27
@@ -61,19 +61,17 @@ impl BitOr for FlagSet {
 #[derive(Debug)]
 struct Rucksack {
     // bit 0 is error, rest index
-    whole: FlagSet,
     left: FlagSet,
-    right: FlagSet
+    right: FlagSet,
 }
 
-impl  Rucksack {
+impl Rucksack {
     fn new(stringy: &str) -> Self {
         let (left, right) = stringy.split_at(stringy.len() / 2);
         let left = FlagSet::new(left);
         let right = FlagSet::new(right);
-        let whole = left | right;
 
-        Self { left, right, whole }
+        Self { left, right }
     }
 
     fn mismatched_item_code(&self) -> i32 {
@@ -82,7 +80,10 @@ impl  Rucksack {
     }
 
     fn intersect_and_determine_present(&self, o1: &Rucksack, o2: &Rucksack) -> i32 {
-        (self.whole & o1.whole & o2.whole).to_charcode()
+        let r1 = self.left | self.right;
+        let r2 = o1.left | o1.right;
+        let r3 = o2.left | o2.right;
+        (r1 & r2 & r3).to_charcode()
     }
 }
 
@@ -102,7 +103,7 @@ fn rucksack_lines(input: &str) -> IResult<&str, Vec<Rucksack>> {
 pub fn solve() {
     let input = read_to_eof_line();
     if let Ok(("", lines)) = rucksack_lines(&input) {
-        let part1 = lines.iter().fold(0i32, |sum: i32, rs: &Rucksack|{
+        let part1 = lines.iter().fold(0i32, |sum: i32, rs: &Rucksack| {
             sum + rs.mismatched_item_code()
         });
         println!("Part 1: {}", part1);
