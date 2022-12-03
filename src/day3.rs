@@ -1,3 +1,4 @@
+use std::ops::{BitAnd, BitOr};
 use nom::character::complete::{alpha1, line_ending};
 use nom::combinator::map;
 use nom::IResult;
@@ -5,62 +6,6 @@ use nom::multi::many1;
 use nom::sequence::terminated;
 use crate::util::read_to_eof_line;
 
-#[derive(Debug)]
-struct Rucksack {
-    // bit 0 is error, rest index
-    whole: u64,
-    left: u64,
-    right: u64
-}
-
-impl  Rucksack {
-    fn new(stringy: &str) -> Self {
-        let (left_str, right_str) = stringy.split_at(stringy.len() / 2);
-        let mut left = 0u64;
-        let mut right = 0u64;
-        let mut whole = 0u64;
-
-        for ch in left_str.chars() {
-            let coded = Self::charcode_to_flag(charcode(ch));
-            left = left | coded;
-            whole = whole | coded;
-        }
-
-        for ch in right_str.chars() {
-            let coded = Self::charcode_to_flag(charcode(ch));
-            right = right | coded;
-            whole = whole | coded;
-        }
-
-        Self { left, right, whole }
-    }
-
-    fn mismatched_item_code(&self) -> i32 {
-        let intersect = self.left & self.right;
-        Self::flag_to_charcode(intersect)
-    }
-
-    fn lowest_item_code(&self) -> i32 {
-        Self::flag_to_charcode(self.whole)
-    }
-
-    fn flag_to_charcode(flag: u64) -> i32 {
-        flag.trailing_zeros() as i32
-    }
-
-    fn charcode_to_flag(charcode: i32) -> u64 {
-        1 << charcode
-    }
-
-    fn intersect(&self, other: &Rucksack) -> Self {
-        let whole = self.whole & other.whole;
-        Rucksack {
-            whole,
-            left: 1,
-            right: 1
-        }
-    }
-}
 
 fn charcode(ch: char) -> i32 {
     const ACODE: i32 = 'a' as i32;
@@ -78,6 +23,69 @@ fn charcode(ch: char) -> i32 {
         0
     }
 }
+
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+struct FlagSet(u64);
+
+impl FlagSet {
+    fn new(str: &str) -> Self {
+        let mut value = 0u64;
+        for ch in str.chars() {
+            let coded = 1 << charcode(ch);
+            value = value | coded
+        }
+        Self(value)
+    }
+
+    fn to_charcode(self) -> i32 {
+        self.0.trailing_zeros() as i32
+    }
+}
+
+impl BitAnd for FlagSet {
+    type Output = FlagSet;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        FlagSet(self.0 & rhs.0)
+    }
+}
+
+impl BitOr for FlagSet {
+    type Output = FlagSet;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        FlagSet(self.0 | rhs.0)
+    }
+}
+
+#[derive(Debug)]
+struct Rucksack {
+    // bit 0 is error, rest index
+    whole: FlagSet,
+    left: FlagSet,
+    right: FlagSet
+}
+
+impl  Rucksack {
+    fn new(stringy: &str) -> Self {
+        let (left, right) = stringy.split_at(stringy.len() / 2);
+        let left = FlagSet::new(left);
+        let right = FlagSet::new(right);
+        let whole = left | right;
+
+        Self { left, right, whole }
+    }
+
+    fn mismatched_item_code(&self) -> i32 {
+        let intersect = self.left & self.right;
+        intersect.to_charcode()
+    }
+
+    fn intersect_and_determine_present(&self, o1: &Rucksack, o2: &Rucksack) -> i32 {
+        (self.whole & o1.whole & o2.whole).to_charcode()
+    }
+}
+
 
 fn rucksack_lines(input: &str) -> IResult<&str, Vec<Rucksack>> {
     many1(
@@ -101,7 +109,7 @@ pub fn solve() {
         let mut part2 = 0i32;
         let mut chunks = lines.chunks(3);
         while let Some([r1, r2, r3]) = chunks.next() {
-            part2 += r1.intersect(r2).intersect(r3).lowest_item_code();
+            part2 += r1.intersect_and_determine_present(r2, r3);
         }
 
         println!("Part2: {}", part2);
