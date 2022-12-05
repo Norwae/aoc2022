@@ -45,16 +45,17 @@ impl Problem {
 
     fn apply_move(&mut self, m: Move) {
         let Move { from, to, count } = m;
-        let mut source_stack = Vec::new();
-        swap(&mut self.columns[from].stack, &mut source_stack);
-        let mid = source_stack.len() - count;
-        let (retain, mve) = source_stack.split_at_mut(mid);
+        let mut temp = Vec::new();
+        swap(&mut self.columns[from].stack, &mut temp);
+        let mid = temp.len() - count;
+        let mve = &mut temp[mid..];
         if self.legacy_mode {
             mve.reverse();
         }
 
-        self.columns[from].stack.extend_from_slice(retain);
         self.columns[to].stack.extend_from_slice(mve);
+        temp.truncate(mid);
+        swap(&mut self.columns[from].stack, &mut temp);
     }
 }
 
