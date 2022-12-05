@@ -23,7 +23,7 @@ struct Column {
 struct Problem {
     columns: Vec<Column>,
     moves: Vec<Move>,
-    legacy_mode: bool
+    legacy_mode: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -119,6 +119,5 @@ pub fn solve() {
         println!("Part 1: {}", part1.run());
         problem.legacy_mode = false;
         println!("Part 2: {}", problem.run());
-
     })
 }
