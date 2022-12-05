@@ -1,4 +1,5 @@
 use std::mem::swap;
+use std::process::Output;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{anychar, digit1, line_ending, space1};
@@ -22,6 +23,7 @@ struct Column {
 struct Problem {
     columns: Vec<Column>,
     moves: Vec<Move>,
+    legacy_mode: bool
 }
 
 #[derive(Debug, Clone)]
@@ -32,12 +34,14 @@ struct Move {
 }
 
 impl Problem {
-    fn run(&mut self) {
+    fn run(mut self) -> String {
         let mut moves = Vec::new();
         swap(&mut moves, &mut self.moves);
         for m in moves {
             self.apply_move(m);
         }
+
+        self.columns.iter().filter_map(|col| col.stack.last()).collect::<String>()
     }
 
     fn apply_move(&mut self, m: Move) {
@@ -46,16 +50,12 @@ impl Problem {
         swap(&mut self.columns[from].stack, &mut source_stack);
         let mid = source_stack.len() - count;
         let (retain, mve) = source_stack.split_at_mut(mid);
-        // disable for part 2
-        // mve.reverse();
+        if self.legacy_mode {
+            mve.reverse();
+        }
 
         self.columns[from].stack.extend_from_slice(retain);
         self.columns[to].stack.extend_from_slice(mve);
-    }
-
-    fn step(&mut self) {
-        let x = self.moves.remove(0);
-        self.apply_move(x);
     }
 }
 
@@ -109,14 +109,16 @@ fn columns(input: &str) -> IResult<&str, Vec<Column>> {
 }
 
 fn parse_input(input: &str) -> IResult<&str, Problem> {
-    map(separated_pair(columns, line_ending, moves), |(columns, moves)| Problem { columns, moves })(input)
+    map(separated_pair(columns, line_ending, moves), |(columns, moves)| Problem { columns, moves, legacy_mode: true })(input)
 }
 
 
 pub fn solve() {
     default_solution(parse_input, |mut problem| {
-        problem.run();
-        let solution = problem.columns.iter().filter_map(|col| col.stack.last()).collect::<String>();
-        println!("Part 2: {}", solution)
+        let part1 = problem.clone();
+        println!("Part 1: {}", part1.run());
+        problem.legacy_mode = false;
+        println!("Part 2: {}", problem.run());
+
     })
 }
