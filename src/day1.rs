@@ -3,6 +3,7 @@ use nom::character::complete::{digit1, line_ending};
 use nom::combinator::map;
 use nom::multi::{many1, separated_list1};
 use nom::sequence::terminated;
+use crate::util::default_solution;
 
 #[derive(Debug)]
 struct Elf {
@@ -33,10 +34,8 @@ fn puzzle_input(input: &str) -> IResult<&str, Vec<Elf>> {
     separated_list1(line_ending, elf_supplies)(input)
 }
 
-
 pub fn solve() {
-    let input = crate::util::read_to_eof_line();
-    if let Ok(("", parsed_input)) = puzzle_input(&input) {
+    default_solution(puzzle_input, |parsed_input|{
         if parsed_input.len() < 3 {
             println!("Too few elves");
         } else {
@@ -45,7 +44,5 @@ pub fn solve() {
             println!("Part 1: {}", supplies[supplies.len() - 1]);
             println!("Part 2: {}", supplies[supplies.len() - 3] + supplies[supplies.len() - 2] + supplies[supplies.len() - 1]);
         }
-    } else {
-        println!("Wonky puzzle input");
-    }
+    })
 }

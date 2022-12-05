@@ -4,7 +4,7 @@ use nom::combinator::map;
 use nom::IResult;
 use nom::multi::many1;
 use nom::sequence::{separated_pair, terminated};
-use crate::util::read_to_eof_line;
+use crate::util::{default_solution};
 
 #[derive(Debug)]
 struct Assignment {
@@ -35,23 +35,18 @@ fn assignment(input: &str) -> IResult<&str, Assignment> {
     )(input)
 }
 
-fn parse_input(input: &str) -> IResult<&str, Vec<(Assignment, Assignment)>> {
-    let pair = separated_pair(assignment, tag(","), assignment);
-
-    many1(terminated(pair, line_ending))(input)
-}
 
 pub fn solve() {
-    let input = read_to_eof_line();
-    let parse = parse_input(&input);
-    if let Ok(("", lines)) = parse {
+    default_solution(|input|{
+        let pair = separated_pair(assignment, tag(","), assignment);
+
+        many1(terminated(pair, line_ending))(input)
+    }, |lines|{
         let part1 = lines.iter().filter(|(a1, a2)|a1.full_overlap(a2)).count();
         println!("Part1: {}", part1);
 
         let part2 = lines.iter().filter(|(a1, a2)|a1.partial_overlap(a2)).count();
 
         println!("Part2: {}", part2);
-    } else {
-        eprintln!("Could not parse: {:?}", parse)
-    }
+    })
 }

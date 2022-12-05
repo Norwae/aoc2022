@@ -1,4 +1,6 @@
+use std::fmt::Debug;
 use std::io::stdin;
+use nom::IResult;
 
 
 pub fn read_to_eof_line() -> String {
@@ -33,6 +35,20 @@ pub fn read_usize(prompt: &str) -> usize {
         } else {
             println!("Invalid input: {}", buf);
         }
+    }
+}
+
+pub fn default_solution<T, Parse, Solve>(parse: Parse, solve: Solve) where
+    T: Debug,
+    Parse: FnOnce(&str) -> IResult<&str, T>,
+    Solve: FnOnce(T) {
+    let input = read_to_eof_line();
+    let parsed = parse(&input);
+
+    if let Ok(("", input)) = parsed {
+        solve(input)
+    } else {
+        println!("Could not parse fully: {:?}", parsed)
     }
 }
 

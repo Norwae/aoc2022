@@ -4,7 +4,7 @@ use nom::combinator::map;
 use nom::IResult;
 use nom::multi::many1;
 use nom::sequence::terminated;
-use crate::util::read_to_eof_line;
+use crate::util::{default_solution};
 
 
 fn charcode(ch: char) -> i32 {
@@ -101,8 +101,7 @@ fn rucksack_lines(input: &str) -> IResult<&str, Vec<Rucksack>> {
 
 
 pub fn solve() {
-    let input = read_to_eof_line();
-    if let Ok(("", lines)) = rucksack_lines(&input) {
+    default_solution(rucksack_lines, |lines|{
         let part1 = lines.iter().fold(0i32, |sum: i32, rs: &Rucksack| {
             sum + rs.mismatched_item_code()
         });
@@ -114,5 +113,5 @@ pub fn solve() {
         }
 
         println!("Part2: {}", part2);
-    }
+    })
 }
