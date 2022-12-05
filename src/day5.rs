@@ -1,5 +1,4 @@
 use std::mem::swap;
-use std::process::Output;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{anychar, digit1, line_ending, space1};
@@ -109,15 +108,15 @@ fn columns(input: &str) -> IResult<&str, Vec<Column>> {
 }
 
 fn parse_input(input: &str) -> IResult<&str, Problem> {
-    map(separated_pair(columns, line_ending, moves), |(columns, moves)| Problem { columns, moves, legacy_mode: true })(input)
+    map(separated_pair(columns, line_ending, moves), |(columns, moves)| Problem { columns, moves, legacy_mode: false })(input)
 }
 
 
 pub fn solve() {
-    default_solution(parse_input, |mut problem| {
-        let part1 = problem.clone();
+    default_solution(parse_input, |problem| {
+        let mut part1 = problem.clone();
+        part1.legacy_mode = true;
         println!("Part 1: {}", part1.run());
-        problem.legacy_mode = false;
         println!("Part 2: {}", problem.run());
     })
 }

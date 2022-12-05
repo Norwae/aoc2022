@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::io::stdin;
+use std::time::Instant;
 use nom::character::complete::digit1;
 use nom::combinator::map;
 use nom::IResult;
@@ -49,10 +50,14 @@ pub fn default_solution<T, Parse, Solve>(parse: Parse, solve: Solve) where
     Parse: FnOnce(&str) -> IResult<&str, T>,
     Solve: FnOnce(T) {
     let input = read_to_eof_line();
+    let start_parse = Instant::now();
     let parsed = parse(&input);
 
     if let Ok(("", input)) = parsed {
-        solve(input)
+        let start_solve = Instant::now();
+        solve(input);
+        let end = Instant::now();
+        println!("Solving duration (including parse): {:?} ({:?})", end - start_solve, end - start_parse)
     } else {
         println!("Could not parse fully: {:?}", parsed)
     }
