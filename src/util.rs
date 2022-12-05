@@ -1,6 +1,12 @@
 use std::fmt::Debug;
 use std::io::stdin;
+use nom::character::complete::digit1;
+use nom::combinator::map;
 use nom::IResult;
+
+pub fn parse_usize(input: &str) -> IResult<&str, usize> {
+    map(digit1, |str: &str| str.parse::<usize>().expect("digits -> usize"))(input)
+}
 
 
 pub fn read_to_eof_line() -> String {
