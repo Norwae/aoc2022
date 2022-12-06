@@ -1,8 +1,6 @@
 use std::io::stdin;
 use std::time::Instant;
 
-use nom::IResult;
-
 fn detect_marker(slice: &[u8]) -> bool {
     let mut seen = [false; 127];
     for byte in slice {
@@ -16,24 +14,22 @@ fn detect_marker(slice: &[u8]) -> bool {
     true
 }
 
+fn detect_distinct_range(whole: &[u8], window_size: usize, prefix: &str) {
+    for i in 0..whole.len() - window_size {
+        if detect_marker(&whole[i..i+window_size]) {
+            println!("Part {}: {}", prefix, i + window_size);
+            break;
+        }
+    }
+}
 
 pub fn solve() {
     let mut buffer = String::new();
     stdin().read_line(&mut buffer).expect("Read line");
     let start = Instant::now();
     let bytes = buffer.as_bytes();
-    for i in 0..bytes.len() - 4 {
-        if detect_marker(&bytes[i..i+4]) {
-            println!("Part1: {}", i + 4);
-            break;
-        }
-    }
-    for i in 0..bytes.len() - 14 {
-        if detect_marker(&bytes[i..i+14]) {
-            println!("Part2: {}", i + 14);
-            break;
-        }
-    }
+    detect_distinct_range(bytes, 4, "1");
+    detect_distinct_range(bytes, 14, "2");
 
     println!("Solution (no parse): {:?}", Instant::now() - start);
 }
