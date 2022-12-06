@@ -5,7 +5,7 @@ fn detect_marker(slice: &[u8]) -> bool {
     let mut seen = [false; 127];
     for byte in slice {
         if seen[*byte as usize] {
-            return false
+            return false;
         } else {
             seen[*byte as usize] = true
         }
@@ -14,9 +14,9 @@ fn detect_marker(slice: &[u8]) -> bool {
     true
 }
 
-fn detect_distinct_range(whole: &[u8], window_size: usize, prefix: &str) {
+fn detect_distinct_range(whole: &[u8], window_size: usize, prefix: &'static str) {
     for i in 0..whole.len() - window_size {
-        if detect_marker(&whole[i..i+window_size]) {
+        if detect_marker(&whole[i..i + window_size]) {
             println!("Part {}: {}", prefix, i + window_size);
             break;
         }
