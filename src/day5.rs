@@ -8,10 +8,6 @@ use nom::multi::{many1, separated_list1};
 use nom::sequence::{delimited, separated_pair, terminated, tuple};
 use crate::util::{default_solution, parse_usize};
 
-enum CrateSpec {
-    Space,
-    Named(char),
-}
 
 #[derive(Debug, Default, Clone)]
 struct Column {
@@ -60,10 +56,10 @@ impl Problem {
 }
 
 
-fn crates(input: &str) -> IResult<&str, Vec<Vec<CrateSpec>>> {
+fn crates(input: &str) -> IResult<&str, Vec<Vec<Option<char>>>> {
     let single_crate_spec = alt((
-        map(tag("   "), |_| CrateSpec::Space),
-        map(delimited(tag("["), anychar, tag("]")), |ch| CrateSpec::Named(ch))
+        map(tag("   "), |_| None),
+        map(delimited(tag("["), anychar, tag("]")), |c|Some(c))
     ));
     let line = terminated(separated_list1(tag(" "), single_crate_spec), line_ending);
     let crate_section = many1(line);
@@ -95,7 +91,7 @@ fn columns(input: &str) -> IResult<&str, Vec<Column>> {
 
             for x in 0..width {
                 for y in 0..height {
-                    if let CrateSpec::Named(ch) = double_vec[y][x] {
+                    if let Some(ch) = double_vec[y][x] {
                         target[x].stack.push(ch)
                     }
                 }
