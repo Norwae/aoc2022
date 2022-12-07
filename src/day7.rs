@@ -1,3 +1,4 @@
+use std::time::Instant;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while};
 use nom::character::complete::line_ending;
@@ -6,7 +7,7 @@ use nom::IResult;
 use nom::multi::{many0, many1};
 use nom::sequence::{preceded, separated_pair, terminated, tuple};
 
-use crate::util::{default_solution, parse_usize};
+use crate::util::{parse_usize, read_to_eof_line};
 
 #[derive(Debug)]
 struct File {
@@ -14,35 +15,35 @@ struct File {
 }
 
 #[derive(Debug)]
-struct Directory {
-    name: String,
-    subdirs: Vec<Directory>,
+struct Directory<'a> {
+    name: &'a str,
+    subdirs: Vec<Directory<'a>>,
     files: Vec<File>,
     total_size: usize,
 }
 
-impl Directory {
-    fn new(name: &str) -> Self {
-        Self { name: name.to_string(), subdirs: Vec::new(), files: Vec::new(), total_size: usize::MAX }
+impl<'a> Directory<'a> {
+    fn new(name: &'a str) -> Self {
+        Self { name, subdirs: Vec::new(), files: Vec::new(), total_size: usize::MAX }
     }
 
-    fn from_command_outputs(outputs: Vec<CommandResult>) -> Self {
+    fn from_command_outputs(outputs: Vec<CommandResult<'a>>) -> Self {
         let mut root = Directory::new("/");
         let mut cwd: Option<&mut Directory> = None;
-        let mut dirstack = Vec::<String>::new();
+        let mut dirstack = Vec::<&'a str>::new();
 
         for cmd in outputs {
             match cmd {
-                CommandResult::Cd(ref path) if path == ".." => {
+                CommandResult::Cd(path) if path == ".." => {
                     dirstack.pop();
                     cwd = None;
                 }
-                CommandResult::Cd(ref path) if path == "/" => {
+                CommandResult::Cd(path) if path == "/" => {
                     dirstack.clear();
                     cwd = None;
                 }
                 CommandResult::Cd(name) => {
-                    cwd = cwd.map(|wd| wd.subdirs.iter_mut().find(|sub| sub.name == name.as_str()).expect("subdir exists"));
+                    cwd = cwd.map(|wd| wd.subdirs.iter_mut().find(|sub| sub.name == name).expect("subdir exists"));
                     dirstack.push(name);
                 }
                 CommandResult::ListResult(res) => {
@@ -51,7 +52,10 @@ impl Directory {
                         cwd_here.introduce(res);
                         cwd = Some(cwd_here)
                     } else {
-                        let cwd_here = root.subdir_deep(&dirstack);
+                        let mut cwd_here = &mut root;
+                        for name in &dirstack {
+                            cwd_here = cwd_here.subdirs.iter_mut().find(|dir| &dir.name == name).expect("subdir present");
+                        }
                         cwd_here.introduce(res);
                         cwd = Some(cwd_here);
                     }
@@ -70,7 +74,7 @@ impl Directory {
         }
     }
 
-    fn introduce(&mut self, results: Vec<LsEntry>) {
+    fn introduce(&mut self, results: Vec<LsEntry<'a>>) {
         assert_eq!(self.total_size, usize::MAX, "size calculation not yet done");
 
         for entry in results {
@@ -91,28 +95,18 @@ impl Directory {
         }).sum();
         self.total_size = files + subdirs;
     }
-
-    fn subdir_deep(&mut self, path: &[String]) -> &mut Directory {
-        if path.is_empty() {
-            self
-        } else {
-            let local_path = &path[0];
-            let next = self.subdirs.iter_mut().find(|d| &d.name == local_path).expect("subdir known");
-            next.subdir_deep(&path[1..])
-        }
-    }
 }
 
 #[derive(Debug)]
-enum LsEntry {
+enum LsEntry<'a> {
     File(File),
-    Dir(Directory),
+    Dir(Directory<'a>),
 }
 
 #[derive(Debug)]
-enum CommandResult {
-    Cd(String),
-    ListResult(Vec<LsEntry>),
+enum CommandResult<'a> {
+    Cd(&'a str),
+    ListResult(Vec<LsEntry<'a>>),
 }
 
 fn namelike(input: &str) -> IResult<&str, &str> {
@@ -146,7 +140,7 @@ fn ls_output(input: &str) -> IResult<&str, Vec<LsEntry>> {
 
 fn cmd(input: &str) -> IResult<&str, CommandResult> {
     alt((
-        map(cmd_cd, |name| CommandResult::Cd(name.to_string())),
+        map(cmd_cd, |name| CommandResult::Cd(name)),
         map(preceded(cmd_ls, ls_output), |entries| CommandResult::ListResult(entries))
     ))(input)
 }
@@ -183,7 +177,16 @@ fn solve_problem(input: Vec<CommandResult>) {
 }
 
 pub fn solve() {
-    default_solution(parse_input, |results| {
-        solve_problem(results)
-    })
+    let input = read_to_eof_line();
+    let start_parse = Instant::now();
+    let parsed = parse_input(&input);
+
+    if let Ok(("", input)) = parsed {
+        let start_solve = Instant::now();
+        solve_problem(input);
+        let end = Instant::now();
+        println!("Solving duration (including parse): {:?} ({:?})", end - start_solve, end - start_parse)
+    } else {
+        println!("Could not parse fully: {:?}", parsed)
+    }
 }
