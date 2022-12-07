@@ -35,6 +35,8 @@ impl Directory {
             match cmd {
                 CommandResult::Cd(ref path) if path == ".." => {
                     dirstack.pop();
+                    // i dislike reparsing if we do another cd .. right after, but
+                    // special-casing this probably isn't worth it
                     cwd = root.subdir_deep(&dirstack);
                 }
                 CommandResult::Cd(ref path) if path == "/" => {
