@@ -1,4 +1,3 @@
-use std::mem::swap;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while};
 use nom::character::complete::line_ending;
@@ -47,9 +46,8 @@ impl Directory {
                     dirstack.push(name);
                 }
                 CommandResult::ListResult(res) => {
-                    let mut cwd_here = None;
-                    swap(&mut cwd_here, &mut cwd);
-                    if let Some(cwd_here) = cwd_here {
+
+                    if let Some(cwd_here) = cwd {
                         cwd_here.introduce(res);
                         cwd = Some(cwd_here)
                     } else {
