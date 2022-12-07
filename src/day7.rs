@@ -1,6 +1,6 @@
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while};
-use nom::character::complete::{alpha1, line_ending};
+use nom::character::complete::line_ending;
 use nom::combinator::map;
 use nom::IResult;
 use nom::multi::{many0, many1};
@@ -33,17 +33,17 @@ impl Directory {
 
         for cmd in outputs {
             match cmd {
-                CommandResult::PushDir(name) => {
-                    cwd = cwd.subdirs.iter_mut().find(|sub|sub.name == name.as_str()).expect("subdir exists");
-                    dirstack.push(name);
-                },
-                CommandResult::PopDir => {
+                CommandResult::Cd(ref path) if path == ".."  => {
                     dirstack.pop();
                     cwd = root.subdir_deep(&dirstack);
                 }
-                CommandResult::GotoRoot => {
+                CommandResult::Cd(ref path) if path == "/" => {
                     dirstack.clear();
                     cwd = &mut root;
+                },
+                CommandResult::Cd(name) => {
+                    cwd = cwd.subdirs.iter_mut().find(|sub|sub.name == name.as_str()).expect("subdir exists");
+                    dirstack.push(name);
                 },
                 CommandResult::ListResult(res) => {
                     cwd.introduce(res)
@@ -103,34 +103,28 @@ enum LsEntry {
 
 #[derive(Debug)]
 enum CommandResult {
-    PushDir(String),
-    PopDir,
-    GotoRoot,
+    Cd(String),
     ListResult(Vec<LsEntry>),
 }
 
-fn cmd_goto_root(input: &str) -> IResult<&str, &str> {
-    terminated(tag("$ cd /"), line_ending)(input)
-}
-
-fn cmd_exit_subdir(input: &str) -> IResult<&str, &str> {
-    terminated(tag("$ cd .."), line_ending)(input)
+fn namelike(input: &str) -> IResult<&str, &str> {
+    take_while(|ch: char|!ch.is_ascii_whitespace())(input)
 }
 
 fn cmd_ls(input: &str) -> IResult<&str, &str> {
     terminated(tag("$ ls"), line_ending)(input)
 }
 
-fn cmd_enter_subdir(input: &str) -> IResult<&str, &str> {
-    map(terminated(tuple((tag("$ cd "), alpha1)), line_ending), |(_, str)| str)(input)
+fn cmd_cd(input: &str) -> IResult<&str, &str> {
+    map(terminated(tuple((tag("$ cd "), namelike)), line_ending), |(_, str)| str)(input)
 }
 
 fn file_entry(input: &str) -> IResult<&str, LsEntry> {
-    map(separated_pair(parse_usize, tag(" "), take_while(|b: char| !b.is_ascii_whitespace())), |(size, _)| LsEntry::File(File { size }))(input)
+    map(separated_pair(parse_usize, tag(" "), namelike), |(size, _)| LsEntry::File(File { size }))(input)
 }
 
 fn dir_entry(input: &str) -> IResult<&str, LsEntry> {
-    map(tuple((tag("dir "), alpha1)), |(_, name): (&str, &str)| LsEntry::Dir(Directory::new(name)))(input)
+    map(tuple((tag("dir "), namelike)), |(_, name): (&str, &str)| LsEntry::Dir(Directory::new(name)))(input)
 }
 
 fn ls_output(input: &str) -> IResult<&str, Vec<LsEntry>> {
@@ -144,9 +138,7 @@ fn ls_output(input: &str) -> IResult<&str, Vec<LsEntry>> {
 
 fn cmd(input: &str) -> IResult<&str, CommandResult> {
     alt((
-        map(cmd_goto_root, |_| CommandResult::GotoRoot),
-        map(cmd_exit_subdir, |_| CommandResult::PopDir),
-        map(cmd_enter_subdir, |name| CommandResult::PushDir(name.to_string())),
+        map(cmd_cd, |name| CommandResult::Cd(name.to_string())),
         map(preceded(cmd_ls, ls_output), |entries| CommandResult::ListResult(entries))
     ))(input)
 }
