@@ -1,5 +1,4 @@
-use std::io::stdin;
-use std::time::Instant;
+use crate::util::{default_solution, parse_identity};
 
 fn detect_marker(slice: &[u8]) -> bool {
     let mut seen = [false; 127];
@@ -23,13 +22,10 @@ fn detect_distinct_range(whole: &[u8], window_size: usize, prefix: &'static str)
     }
 }
 
-pub fn solve() {
-    let mut buffer = String::new();
-    stdin().read_line(&mut buffer).expect("Read line");
-    let start = Instant::now();
-    let bytes = buffer.as_bytes();
+fn solve_problem(input: &str) {
+    let bytes = input.as_bytes();
     detect_distinct_range(bytes, 4, "1");
     detect_distinct_range(bytes, 14, "2");
-
-    println!("Solution (no parse): {:?}", Instant::now() - start);
 }
+
+default_solution!(parse_identity, solve_problem);

@@ -7,6 +7,9 @@ pub fn parse_usize(input: &str) -> IResult<&str, usize> {
     map(digit1, |str: &str| str.parse::<usize>().expect("digits -> usize"))(input)
 }
 
+pub fn parse_identity(input: &str) -> IResult<&str, &str> {
+    Ok(("", input))
+}
 
 pub fn read_to_eof_line() -> String {
     let mut accu = String::new();
