@@ -28,15 +28,24 @@ impl Directory {
 
     fn from_command_outputs(outputs: Vec<CommandResult>) -> Self {
         let mut root = Directory::new("/");
+        let mut cwd = &mut root;
         let mut dirstack = Vec::<String>::new();
 
         for cmd in outputs {
             match cmd {
-                CommandResult::PushDir(name) => dirstack.push(name),
-                CommandResult::PopDir => { dirstack.pop(); }
-                CommandResult::GotoRoot => dirstack.clear(),
+                CommandResult::PushDir(name) => {
+                    cwd = cwd.subdirs.iter_mut().find(|sub|sub.name == name.as_str()).expect("subdir exists");
+                    dirstack.push(name);
+                },
+                CommandResult::PopDir => {
+                    dirstack.pop();
+                    cwd = root.subdir_deep(&dirstack);
+                }
+                CommandResult::GotoRoot => {
+                    dirstack.clear();
+                    cwd = &mut root;
+                },
                 CommandResult::ListResult(res) => {
-                    let cwd = root.subdir_deep(dirstack.as_slice());
                     cwd.introduce(res)
                 }
             }
