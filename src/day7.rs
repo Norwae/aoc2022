@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while};
 use nom::character::complete::{alpha1, line_ending};
@@ -6,6 +5,7 @@ use nom::combinator::map;
 use nom::IResult;
 use nom::multi::{many0, many1};
 use nom::sequence::{preceded, separated_pair, terminated, tuple};
+
 use crate::util::{default_solution, parse_usize};
 
 #[derive(Debug)]
@@ -16,14 +16,14 @@ struct File {
 #[derive(Debug)]
 struct Directory {
     name: String,
-    subdirs: HashMap<String, Directory>,
+    subdirs: Vec<Directory>,
     files: Vec<File>,
     total_size: usize
 }
 
 impl Directory {
     fn new(name: &str) -> Self {
-        Self { name: name.to_string(), subdirs: HashMap::new(), files: Vec::new(), total_size: usize::MAX }
+        Self { name: name.to_string(), subdirs: Vec::new(), files: Vec::new(), total_size: usize::MAX }
     }
 
     fn from_command_outputs(outputs: Vec<CommandResult>) -> Self {
@@ -48,7 +48,7 @@ impl Directory {
 
     fn traverse_subdirs<Visitor: FnMut(&Directory)>(&self, visit: &mut Visitor) {
         visit(self);
-        for subdir in self.subdirs.values() {
+        for subdir in &self.subdirs {
             subdir.traverse_subdirs(visit);
         }
     }
@@ -59,8 +59,8 @@ impl Directory {
         for entry in results {
             match entry {
                 LsEntry::File(f) => self.files.push(f),
-                LsEntry::Dir(d) => if !self.subdirs.contains_key(&d.name) {
-                    self.subdirs.insert(d.name.clone(), d);
+                LsEntry::Dir(d) => {
+                    self.subdirs.push(d);
                 },
             }
         }
@@ -68,7 +68,7 @@ impl Directory {
 
     fn finalize(&mut self){
         let files: usize = self.files.iter().map(|f|f.size).sum();
-        let subdirs: usize = self.subdirs.values_mut().map(|d|{
+        let subdirs: usize = self.subdirs.iter_mut().map(|d|{
             d.finalize();
             d.total_size
         }).sum();
@@ -80,7 +80,7 @@ impl Directory {
             self
         } else {
             let local_path = &path[0];
-            let next = self.subdirs.get_mut(local_path).expect("directory exists");
+            let next = self.subdirs.iter_mut().find(|d|&d.name == local_path).expect("subdir known");
             next.subdir_deep(&path[1..])
         }
     }
