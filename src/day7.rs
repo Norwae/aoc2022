@@ -42,11 +42,10 @@ impl Directory {
                     cwd = None;
                 }
                 CommandResult::Cd(name) => {
-                    cwd = cwd.map(|wd|wd.subdirs.iter_mut().find(|sub| sub.name == name.as_str()).expect("subdir exists"));
+                    cwd = cwd.map(|wd| wd.subdirs.iter_mut().find(|sub| sub.name == name.as_str()).expect("subdir exists"));
                     dirstack.push(name);
                 }
                 CommandResult::ListResult(res) => {
-
                     if let Some(cwd_here) = cwd {
                         cwd_here.introduce(res);
                         cwd = Some(cwd_here)
