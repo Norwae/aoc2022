@@ -14,7 +14,6 @@ impl Elf {
     fn new(supplies: Vec<u64>) -> Self {
         Self { supplies: supplies.into_iter().sum() }
     }
-
 }
 
 fn calorie_count(input: &str) -> IResult<&str, u64> {
@@ -34,15 +33,15 @@ fn puzzle_input(input: &str) -> IResult<&str, Vec<Elf>> {
     separated_list1(line_ending, elf_supplies)(input)
 }
 
-pub fn solve() {
-    default_solution(puzzle_input, |parsed_input|{
-        if parsed_input.len() < 3 {
-            println!("Too few elves");
-        } else {
-            let mut supplies = parsed_input.into_iter().map(|e|e.supplies).collect::<Vec<u64>>();
-            supplies.sort();
-            println!("Part 1: {}", supplies[supplies.len() - 1]);
-            println!("Part 2: {}", supplies[supplies.len() - 3] + supplies[supplies.len() - 2] + supplies[supplies.len() - 1]);
-        }
-    })
+fn solve_problem(parsed_input: Vec<Elf>) {
+    if parsed_input.len() < 3 {
+        println!("Too few elves");
+    } else {
+        let mut supplies = parsed_input.into_iter().map(|e|e.supplies).collect::<Vec<u64>>();
+        supplies.sort();
+        println!("Part 1: {}", supplies[supplies.len() - 1]);
+        println!("Part 2: {}", supplies[supplies.len() - 3] + supplies[supplies.len() - 2] + supplies[supplies.len() - 1]);
+    }
 }
+
+default_solution!(puzzle_input, solve_problem);

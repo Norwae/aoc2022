@@ -4,7 +4,7 @@ use nom::combinator::map;
 use nom::IResult;
 use nom::multi::many1;
 use nom::sequence::{separated_pair, terminated};
-use crate::util::{default_solution};
+use crate::util::default_solution;
 
 #[derive(Debug)]
 struct Assignment {
@@ -35,18 +35,20 @@ fn assignment(input: &str) -> IResult<&str, Assignment> {
     )(input)
 }
 
+fn parse(input: &str) -> IResult<&str, Vec<(Assignment, Assignment)>> {
+    let pair = separated_pair(assignment, tag(","), assignment);
 
-pub fn solve() {
-    default_solution(|input|{
-        let pair = separated_pair(assignment, tag(","), assignment);
-
-        many1(terminated(pair, line_ending))(input)
-    }, |lines|{
-        let part1 = lines.iter().filter(|(a1, a2)|a1.full_overlap(a2)).count();
-        println!("Part1: {}", part1);
-
-        let part2 = lines.iter().filter(|(a1, a2)|a1.partial_overlap(a2)).count();
-
-        println!("Part2: {}", part2);
-    })
+    many1(terminated(pair, line_ending))(input)
 }
+
+fn solve_problem(lines: Vec<(Assignment, Assignment)>) {
+    let part1 = lines.iter().filter(|(a1, a2)| a1.full_overlap(a2)).count();
+    println!("Part1: {}", part1);
+
+    let part2 = lines.iter().filter(|(a1, a2)| a1.partial_overlap(a2)).count();
+
+    println!("Part2: {}", part2);
+}
+
+
+default_solution!(parse, solve_problem);

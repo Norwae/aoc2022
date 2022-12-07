@@ -108,12 +108,12 @@ fn parse_input(input: &str) -> IResult<&str, Problem> {
     map(separated_pair(columns, line_ending, moves), |(columns, moves)| Problem { columns, moves, legacy_mode: false })(input)
 }
 
-
-pub fn solve() {
-    default_solution(parse_input, |problem| {
-        let mut part1 = problem.clone();
-        part1.legacy_mode = true;
-        println!("Part 1: {}", part1.run());
-        println!("Part 2: {}", problem.run());
-    })
+fn solve_problem(problem: Problem) {
+    let mut part1 = problem.clone();
+    part1.legacy_mode = true;
+    println!("Part 1: {}", part1.run());
+    println!("Part 2: {}", problem.run());
 }
+
+
+default_solution!(parse_input, solve_problem);

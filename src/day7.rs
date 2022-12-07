@@ -1,4 +1,3 @@
-use std::time::Instant;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while};
 use nom::character::complete::line_ending;
@@ -7,7 +6,7 @@ use nom::IResult;
 use nom::multi::{many0, many1};
 use nom::sequence::{preceded, separated_pair, terminated, tuple};
 
-use crate::util::{parse_usize, read_to_eof_line};
+use crate::util::{default_solution, parse_usize};
 
 #[derive(Debug)]
 struct File {
@@ -176,17 +175,4 @@ fn solve_problem(input: Vec<CommandResult>) {
     println!("Part2: {}", delete_dir_size);
 }
 
-pub fn solve() {
-    let input = read_to_eof_line();
-    let start_parse = Instant::now();
-    let parsed = parse_input(&input);
-
-    if let Ok(("", input)) = parsed {
-        let start_solve = Instant::now();
-        solve_problem(input);
-        let end = Instant::now();
-        println!("Solving duration (including parse): {:?} ({:?})", end - start_solve, end - start_parse)
-    } else {
-        println!("Could not parse fully: {:?}", parsed)
-    }
-}
+default_solution!(parse_input, solve_problem);

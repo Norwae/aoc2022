@@ -1,6 +1,4 @@
-use std::fmt::Debug;
 use std::io::stdin;
-use std::time::Instant;
 use nom::character::complete::digit1;
 use nom::combinator::map;
 use nom::IResult;
@@ -45,24 +43,27 @@ pub fn read_usize(prompt: &str) -> usize {
     }
 }
 
-pub fn default_solution<T, Parse, Solve>(parse: Parse, solve: Solve) where
-    T: Debug,
-    Parse: FnOnce(&str) -> IResult<&str, T>,
-    Solve: FnOnce(T) {
-    let input = read_to_eof_line();
+macro_rules! default_solution {
+    ($parse:ident, $solve:ident) => {
+pub fn solve() {
+    use std::time::Instant;
+    let input = crate::util::read_to_eof_line();
     let start_parse = Instant::now();
-    let parsed = parse(&input);
+    let parsed = $parse(&input);
 
     if let Ok(("", input)) = parsed {
         let start_solve = Instant::now();
-        solve(input);
+        $solve(input);
         let end = Instant::now();
         println!("Solving duration (including parse): {:?} ({:?})", end - start_solve, end - start_parse)
     } else {
         println!("Could not parse fully: {:?}", parsed)
     }
 }
+    };
+}
 
+pub(crate) use default_solution;
 
 pub fn day_not_solved() {
     println!("Day not solved yet")
