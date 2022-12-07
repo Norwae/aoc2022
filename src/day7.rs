@@ -18,7 +18,7 @@ struct Directory {
     name: String,
     subdirs: Vec<Directory>,
     files: Vec<File>,
-    total_size: usize
+    total_size: usize,
 }
 
 impl Directory {
@@ -33,18 +33,18 @@ impl Directory {
 
         for cmd in outputs {
             match cmd {
-                CommandResult::Cd(ref path) if path == ".."  => {
+                CommandResult::Cd(ref path) if path == ".." => {
                     dirstack.pop();
                     cwd = root.subdir_deep(&dirstack);
                 }
                 CommandResult::Cd(ref path) if path == "/" => {
                     dirstack.clear();
                     cwd = &mut root;
-                },
+                }
                 CommandResult::Cd(name) => {
-                    cwd = cwd.subdirs.iter_mut().find(|sub|sub.name == name.as_str()).expect("subdir exists");
+                    cwd = cwd.subdirs.iter_mut().find(|sub| sub.name == name.as_str()).expect("subdir exists");
                     dirstack.push(name);
-                },
+                }
                 CommandResult::ListResult(res) => {
                     cwd.introduce(res)
                 }
@@ -70,14 +70,14 @@ impl Directory {
                 LsEntry::File(f) => self.files.push(f),
                 LsEntry::Dir(d) => {
                     self.subdirs.push(d);
-                },
+                }
             }
         }
     }
 
-    fn finalize(&mut self){
-        let files: usize = self.files.iter().map(|f|f.size).sum();
-        let subdirs: usize = self.subdirs.iter_mut().map(|d|{
+    fn finalize(&mut self) {
+        let files: usize = self.files.iter().map(|f| f.size).sum();
+        let subdirs: usize = self.subdirs.iter_mut().map(|d| {
             d.finalize();
             d.total_size
         }).sum();
@@ -89,7 +89,7 @@ impl Directory {
             self
         } else {
             let local_path = &path[0];
-            let next = self.subdirs.iter_mut().find(|d|&d.name == local_path).expect("subdir known");
+            let next = self.subdirs.iter_mut().find(|d| &d.name == local_path).expect("subdir known");
             next.subdir_deep(&path[1..])
         }
     }
@@ -108,7 +108,7 @@ enum CommandResult {
 }
 
 fn namelike(input: &str) -> IResult<&str, &str> {
-    take_while(|ch: char|!ch.is_ascii_whitespace())(input)
+    take_while(|ch: char| !ch.is_ascii_whitespace())(input)
 }
 
 fn cmd_ls(input: &str) -> IResult<&str, &str> {
@@ -148,7 +148,6 @@ fn parse_input(input: &str) -> IResult<&str, Vec<CommandResult>> {
 }
 
 fn solve_problem(input: Vec<CommandResult>) {
-
     let root = Directory::from_command_outputs(input);
 
     let mut small_subdirs = 0usize;
