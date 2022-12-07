@@ -46,6 +46,7 @@ impl Directory {
                     dirstack.push(name);
                 }
                 CommandResult::ListResult(res) => {
+                    // must reinit in either path to prove that no multiple mutable borrows may occur
                     if let Some(cwd_here) = cwd {
                         cwd_here.introduce(res);
                         cwd = Some(cwd_here)
