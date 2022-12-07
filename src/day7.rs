@@ -1,3 +1,4 @@
+use std::mem::swap;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while};
 use nom::character::complete::line_ending;
@@ -28,27 +29,34 @@ impl Directory {
 
     fn from_command_outputs(outputs: Vec<CommandResult>) -> Self {
         let mut root = Directory::new("/");
-        let mut cwd = &mut root;
+        let mut cwd: Option<&mut Directory> = None;
         let mut dirstack = Vec::<String>::new();
 
         for cmd in outputs {
             match cmd {
                 CommandResult::Cd(ref path) if path == ".." => {
                     dirstack.pop();
-                    // i dislike reparsing if we do another cd .. right after, but
-                    // special-casing this probably isn't worth it
-                    cwd = root.subdir_deep(&dirstack);
+                    cwd = None;
                 }
                 CommandResult::Cd(ref path) if path == "/" => {
                     dirstack.clear();
-                    cwd = &mut root;
+                    cwd = None;
                 }
                 CommandResult::Cd(name) => {
-                    cwd = cwd.subdirs.iter_mut().find(|sub| sub.name == name.as_str()).expect("subdir exists");
+                    cwd = cwd.map(|wd|wd.subdirs.iter_mut().find(|sub| sub.name == name.as_str()).expect("subdir exists"));
                     dirstack.push(name);
                 }
                 CommandResult::ListResult(res) => {
-                    cwd.introduce(res)
+                    let mut cwd_here = None;
+                    swap(&mut cwd_here, &mut cwd);
+                    if let Some(cwd_here) = cwd_here {
+                        cwd_here.introduce(res);
+                        cwd = Some(cwd_here)
+                    } else {
+                        let cwd_here = root.subdir_deep(&dirstack);
+                        cwd_here.introduce(res);
+                        cwd = Some(cwd_here);
+                    }
                 }
             }
         }
