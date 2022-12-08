@@ -49,18 +49,22 @@ pub mod linear2d {
             self.storage.iter()
         }
 
-        pub fn sweep_by<IndexMutator1, IndexMutator2, LineInit, Element>(&mut self, mut index: Index2D, index_increment: IndexMutator1, line_increment: IndexMutator2, mut line_init: LineInit, mut element: Element)
+        pub fn sweep_by
+        <State, IndexMutator1, IndexMutator2, LineInit, Element>
+        (&mut self, mut state: State, mut index: Index2D, index_increment: IndexMutator1,
+         line_increment: IndexMutator2, mut line_init: LineInit, mut element: Element,
+        )
             where IndexMutator1: Fn(&mut Index2D),
                   IndexMutator2: Fn(&mut Index2D),
-                  LineInit: FnMut() -> bool,
-                  Element: FnMut(Index2D, &mut T) -> bool
+                  LineInit: Fn(&mut State) -> bool,
+                  Element: Fn(&mut State, Index2D, &mut T) -> bool
         {
             while index.0 < self.width && index.1 < self.height {
-                if !line_init() {
+                if !line_init(&mut state) {
                     break;
                 }
                 while index.0 < self.width && index.1 < self.height {
-                    if !element(index.clone(), &mut self[index]) {
+                    if !element(&mut state, index.clone(), &mut self[index]) {
                         break;
                     }
                     index_increment(&mut index)
@@ -70,13 +74,15 @@ pub mod linear2d {
             }
         }
 
-        pub fn sweep<LineInit, Element>(&mut self, dir: Direction, line_init: LineInit, element: Element)
-            where LineInit: FnMut() -> bool,
-                  Element: FnMut(Index2D, &mut T) -> bool {
+        pub fn sweep<State, LineInit, Element>(&mut self, state: State, dir: Direction, line_init: LineInit, element: Element)
+            where
+                LineInit: Fn(&mut State) -> bool,
+                Element: Fn(&mut State, Index2D, &mut T) -> bool {
             let height = self.height;
             let width = self.width;
             match dir {
                 Direction::NorthToSouth => self.sweep_by(
+                    state,
                     (0, 0).into(),
                     |idx| idx.1 += 1,
                     |idx| *idx = Index2D(idx.0 + 1, 0),
@@ -84,6 +90,7 @@ pub mod linear2d {
                     element,
                 ),
                 Direction::WestToEast => self.sweep_by(
+                    state,
                     (0, 0).into(),
                     |idx| idx.0 += 1,
                     |idx| *idx = Index2D(0, idx.1 + 1),
@@ -91,6 +98,7 @@ pub mod linear2d {
                     element,
                 ),
                 Direction::SouthToNorth => self.sweep_by(
+                    state,
                     (0, self.height - 1).into(),
                     |idx| idx.1 = idx.1.wrapping_sub(1),
                     |idx| *idx = Index2D(idx.0 + 1, height - 1),
@@ -98,6 +106,7 @@ pub mod linear2d {
                     element,
                 ),
                 Direction::EastToWest => self.sweep_by(
+                    state,
                     (self.width - 1, 0).into(),
                     |idx| idx.0 = idx.0.wrapping_sub(1),
                     |idx| *idx = Index2D(width - 1, idx.1 + 1),
