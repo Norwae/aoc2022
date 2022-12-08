@@ -44,6 +44,10 @@ impl Tree {
         }
     }
 
+    fn scenic_score(&self) -> {
+        self.viewing_distance_north * self.viewing_distance_east * self.viewing_distance_south * self.viewing_distance_west
+    }
+
     fn is_visible(&self) -> bool {
         self.blocker_north_height == -1 || self.blocker_east_height == -1 || self.blocker_south_height == -1 || self.blocker_west_height == -1
     }
@@ -68,10 +72,10 @@ fn parse(input: &str) -> IResult<&str, Linear2DArray<Tree>> {
 fn solve_problem(mut input: Linear2DArray<Tree>) {
     let max = RefCell::new(-2i32);
     for dir in Direction::ALL {
-        input.sweep(dir, ||{
+        input.sweep(dir, || {
             *max.borrow_mut() = -1;
             true
-        }, |tree|{
+        }, |tree| {
             let height = tree.height;
             let max_so_far = *max.borrow();
             let field = tree.blocker_field(dir);
@@ -84,7 +88,7 @@ fn solve_problem(mut input: Linear2DArray<Tree>) {
         });
     }
 
-    println!("Part 1: {}", input.iter().filter(|t|t.is_visible()).count())
+    println!("Part 1: {}", input.iter().filter(|t| t.is_visible()).count())
 }
 
 default_solution!(parse, solve_problem);
