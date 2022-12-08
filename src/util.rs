@@ -1,5 +1,5 @@
 use std::io::stdin;
-use nom::character::complete::{digit1, one_of};
+use nom::character::complete::{digit1};
 use nom::combinator::map;
 use nom::IResult;
 
@@ -52,7 +52,7 @@ pub mod linear2d {
         pub fn sweep_by
         <State, IndexMutator1, IndexMutator2, LineInit, Element>
         (&mut self, mut state: State, mut index: Index2D, index_increment: IndexMutator1,
-         line_increment: IndexMutator2, mut line_init: LineInit, mut element: Element,
+         line_increment: IndexMutator2, line_init: LineInit, element: Element,
         )
             where IndexMutator1: Fn(&mut Index2D),
                   IndexMutator2: Fn(&mut Index2D),
@@ -140,10 +140,6 @@ pub mod linear2d {
 
 pub fn parse_usize(input: &str) -> IResult<&str, usize> {
     map(digit1, |str: &str| str.parse::<usize>().expect("digits -> usize"))(input)
-}
-
-pub fn parse_single_digit(input: &str) -> IResult<&str, i32> {
-    map(one_of("0123456789"), |charcode| charcode as i32 - '0' as i32)(input)
 }
 
 pub fn parse_identity(input: &str) -> IResult<&str, &str> {

@@ -1,24 +1,11 @@
-use std::borrow::BorrowMut;
-use std::cell::RefCell;
-use nom::branch::alt;
-use nom::character::complete::{digit1, line_ending};
-use nom::combinator::{map, peek};
 use nom::IResult;
-use nom::multi::many1;
-use nom::sequence::tuple;
-use crate::util::{default_solution, parse_single_digit, linear2d::Linear2DArray, linear2d::Direction};
-use crate::util::linear2d::Index2D;
+
+use crate::util::{default_solution, linear2d::Direction, linear2d::Linear2DArray};
 
 #[derive(Debug)]
 struct Tree {
-    blocked_north: bool,
-    blocked_east: bool,
-    blocked_south: bool,
-    blocked_west: bool,
-    viewing_distance_north: i32,
-    viewing_distance_east: i32,
-    viewing_distance_south: i32,
-    viewing_distance_west: i32,
+    blocked_direction_count: i32,
+    scenic_score: i32,
     height: i32,
 }
 
@@ -26,58 +13,26 @@ impl Tree {
     fn new(height: i32) -> Self {
         Self {
             height,
-            blocked_north: false,
-            blocked_east: false,
-            blocked_south: false,
-            blocked_west: false,
-            viewing_distance_north: -1,
-            viewing_distance_east: -1,
-            viewing_distance_south: -1,
-            viewing_distance_west: -1,
+            blocked_direction_count: 0,
+            scenic_score: 1,
         }
-    }
-
-    fn viewing_distance_field(&mut self, dir: Direction) -> &mut i32 {
-        match dir {
-            Direction::NorthToSouth => &mut self.viewing_distance_north,
-            Direction::WestToEast => &mut self.viewing_distance_west,
-            Direction::SouthToNorth => &mut self.viewing_distance_south,
-            Direction::EastToWest => &mut self.viewing_distance_east
-        }
-    }
-
-    fn blocker_field(&mut self, dir: Direction) -> &mut bool {
-        match dir {
-            Direction::NorthToSouth => &mut self.blocked_north,
-            Direction::WestToEast => &mut self.blocked_west,
-            Direction::SouthToNorth => &mut self.blocked_south,
-            Direction::EastToWest => &mut self.blocked_east
-        }
-    }
-
-    fn scenic_score(&self) -> i32 {
-        self.viewing_distance_north * self.viewing_distance_east * self.viewing_distance_south * self.viewing_distance_west
     }
 
     fn is_visible(&self) -> bool {
-        !(self.blocked_south && self.blocked_north && self.blocked_east && self.blocked_west)
+        self.blocked_direction_count < 4
     }
 }
 
 
 fn parse(input: &str) -> IResult<&str, Linear2DArray<Tree>> {
-    map(tuple((
-        peek(digit1),
-        many1(alt((
-            map(line_ending, |_| Vec::new()),
-            many1(parse_single_digit),
-        )))
-    )), |(first_line, lines)| {
-        let width = first_line.len();
-        let storage = lines.into_iter().flatten().map(|height| Tree::new(height)).collect();
+    let bytes = input.as_bytes();
+    let width = bytes.iter().filter(|b| **b < b'0').count();
+    let storage = bytes.into_iter().filter(|b| **b >= b'0' && **b <= b'9').map(|b|{
+        let height = (*b - b'0') as i32;
+        Tree::new(height)
+    }).collect();
 
-        Linear2DArray::new(storage, width)
-    })(input)
+    IResult::Ok(("", Linear2DArray::new(storage, width)))
 }
 
 fn solve_problem(mut input: Linear2DArray<Tree>) {
@@ -92,17 +47,16 @@ fn solve_problem(mut input: Linear2DArray<Tree>) {
             state.highest = -1;
             state.visible_at_height.fill(0);
             true
-        }, |state, idx, tree| {
+        }, |state, _idx, tree| {
             let height = tree.height;
             if state.highest >= height {
-                let blocked = tree.blocker_field(dir);
-                *blocked = true
+                tree.blocked_direction_count += 1;
             } else {
-                state.highest = height
+                state.highest = height;
             }
 
             let height = height as usize;
-            *tree.viewing_distance_field(dir) = state.visible_at_height[height];
+            tree.scenic_score *= state.visible_at_height[height];
             (&mut state.visible_at_height[0..=height]).fill(1);
             (&mut state.visible_at_height[(1 + height)..]).iter_mut().for_each(|value| *value += 1);
 
@@ -111,7 +65,7 @@ fn solve_problem(mut input: Linear2DArray<Tree>) {
     }
 
     println!("Part 1: {}", input.iter().filter(|t| t.is_visible()).count());
-    println!("Part 2: {}", input.iter().map(|t|t.scenic_score()).max().unwrap());
+    println!("Part 2: {}", input.iter().map(|t|t.scenic_score).max().unwrap());
 }
 
 default_solution!(parse, solve_problem);
