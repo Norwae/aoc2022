@@ -19,11 +19,11 @@ pub fn ensure_ready() {
     RUNTIME.block_on(handle).expect("can complete simple task");
 }
 
-pub fn in_parallel<A, Fut>(body: Fut) -> JoinHandle<A>
+pub fn in_parallel<A, F>(body: F) -> JoinHandle<A>
     where A: Send + 'static,
-          Fut: Future<Output=A> + Send + 'static
+        F: FnOnce() -> A + Send + 'static
 {
-    RUNTIME.spawn(body)
+    RUNTIME.spawn_blocking(body)
 }
 
 pub fn block_on<A, Fut>(body: Fut) -> A
