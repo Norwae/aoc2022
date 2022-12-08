@@ -13,19 +13,20 @@ fn detect_marker(slice: &[u8]) -> bool {
     true
 }
 
-fn detect_distinct_range(whole: &[u8], window_size: usize, prefix: &'static str) {
+fn detect_distinct_range(whole: &[u8], window_size: usize) -> usize {
     for i in 0..whole.len() - window_size {
         if detect_marker(&whole[i..i + window_size]) {
-            println!("Part {}: {}", prefix, i + window_size);
-            break;
+            return i + window_size;
         }
     }
+
+    usize::MAX
 }
 
-fn solve_problem(input: &str) {
+fn solve_problem(input: &str) -> (usize, usize){
     let bytes = input.as_bytes();
-    detect_distinct_range(bytes, 4, "1");
-    detect_distinct_range(bytes, 14, "2");
+    (detect_distinct_range(bytes, 4),
+     detect_distinct_range(bytes, 14))
 }
 
 default_solution!(parse_identity, solve_problem);

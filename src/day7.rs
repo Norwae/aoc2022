@@ -148,7 +148,7 @@ fn parse_input(input: &str) -> IResult<&str, Vec<CommandResult>> {
     many1(cmd)(input)
 }
 
-fn solve_problem(input: Vec<CommandResult>) {
+fn solve_problem(input: Vec<CommandResult>) -> (usize, usize) {
     let root = Directory::from_command_outputs(input);
 
     let mut small_subdirs = 0usize;
@@ -158,7 +158,7 @@ fn solve_problem(input: Vec<CommandResult>) {
             small_subdirs += size
         }
     });
-    println!("Part1: {}", small_subdirs);
+
     const TOTAL: usize = 70000000;
     const REQUIRED: usize = 30000000;
     let available = TOTAL - root.total_size;
@@ -172,7 +172,8 @@ fn solve_problem(input: Vec<CommandResult>) {
             delete_dir_size = size
         }
     });
-    println!("Part2: {}", delete_dir_size);
+
+    (small_subdirs, delete_dir_size)
 }
 
 default_solution!(parse_input, solve_problem);

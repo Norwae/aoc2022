@@ -8,3 +8,11 @@ edition = "2021"
 [dependencies]
 
 nom = "7.1"
+
+[dev-dependencies]
+criterion = "0.4"
+
+
+[[bench]]
+name = "all"
+harness = false

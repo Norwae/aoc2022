@@ -183,17 +183,17 @@ pub fn read_usize(prompt: &str) -> usize {
 
 macro_rules! default_solution {
     ($parse:ident, $solve:ident) => {
+pub fn benchmark_hook(input: &str) {
+       $solve($parse(input).expect("Example okay").1);
+}
+
 pub fn solve() {
-    use std::time::Instant;
     let input = crate::util::read_to_eof_line();
-    let start_parse = Instant::now();
     let parsed = $parse(&input);
 
     if let Ok(("", input)) = parsed {
-        let start_solve = Instant::now();
-        $solve(input);
-        let end = Instant::now();
-        println!("Solving duration (including parse): {:?} ({:?})", end - start_solve, end - start_parse)
+        let (part1, part2) = $solve(input);
+        println!("Part 1: {}\nPart 2: {}", part1, part2);
     } else {
         println!("Could not parse fully: {:?}", parsed)
     }

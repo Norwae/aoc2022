@@ -41,13 +41,12 @@ fn parse(input: &str) -> IResult<&str, Vec<(Assignment, Assignment)>> {
     many1(terminated(pair, line_ending))(input)
 }
 
-fn solve_problem(lines: Vec<(Assignment, Assignment)>) {
+fn solve_problem(lines: Vec<(Assignment, Assignment)>) -> (usize, usize) {
     let part1 = lines.iter().filter(|(a1, a2)| a1.full_overlap(a2)).count();
-    println!("Part1: {}", part1);
 
     let part2 = lines.iter().filter(|(a1, a2)| a1.partial_overlap(a2)).count();
 
-    println!("Part2: {}", part2);
+    (part1, part2)
 }
 
 
