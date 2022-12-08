@@ -39,7 +39,7 @@ struct SweepState {
     visible_at_height: [u32; 10],
 }
 
-async fn compute_sweep(mut trees: Linear2DArray<Tree>, direction: Direction) -> Linear2DArray<Tree> {
+fn compute_sweep(mut trees: Linear2DArray<Tree>, direction: Direction) -> Linear2DArray<Tree> {
     let mut state = SweepState::default();
     trees.sweep(&mut state, direction, |state| {
         state.highest = -1;
@@ -66,17 +66,20 @@ async fn compute_sweep(mut trees: Linear2DArray<Tree>, direction: Direction) -> 
 }
 
 fn compute_solution(input: Linear2DArray<Tree>) -> (u32, u32) {
-    let west = util::parallel::in_parallel(
-        compute_sweep(input.clone(), Direction::WestToEast)
+    let input1 = input.clone();
+    let west = util::parallel::in_parallel(move ||
+        compute_sweep(input1, Direction::WestToEast)
     );
-    let north = util::parallel::in_parallel(
-        compute_sweep(input.clone(), Direction::NorthToSouth)
-    );
-    let east = util::parallel::in_parallel(
-        compute_sweep(input.clone(), Direction::EastToWest)
+    let input1 = input.clone();
+    let north = util::parallel::in_parallel(move ||
+        compute_sweep(input1, Direction::NorthToSouth)
     );
 
-    let south = util::parallel::in_parallel(
+    let input1 = input.clone();
+    let east = util::parallel::in_parallel(move ||
+        compute_sweep(input1, Direction::EastToWest)
+    );
+    let south = util::parallel::in_parallel(move ||
         compute_sweep(input, Direction::SouthToNorth)
     );
 
@@ -100,7 +103,6 @@ fn compute_solution(input: Linear2DArray<Tree>) -> (u32, u32) {
         } else {
             (0, 0)
         }
-
     };
 
     util::parallel::block_on(finish)
