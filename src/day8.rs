@@ -35,7 +35,8 @@ fn parse(input: &str) -> IResult<&str, Linear2DArray<Tree>> {
     IResult::Ok(("", Linear2DArray::new(storage, width)))
 }
 
-fn solve_problem(mut input: Linear2DArray<Tree>) {
+fn compute_solution(mut input: Linear2DArray<Tree>) -> (usize, i32) {
+
     #[derive(Debug, Default)]
     struct SweepState {
         highest: i32,
@@ -64,8 +65,8 @@ fn solve_problem(mut input: Linear2DArray<Tree>) {
         });
     }
 
-    println!("Part 1: {}", input.iter().filter(|t| t.is_visible()).count());
-    println!("Part 2: {}", input.iter().map(|t|t.scenic_score).max().unwrap());
+    (input.iter().filter(|t| t.is_visible()).count(), input.iter().map(|t|t.scenic_score).max().unwrap())
 }
 
-default_solution!(parse, solve_problem);
+
+default_solution!(parse, compute_solution);

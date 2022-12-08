@@ -99,19 +99,18 @@ fn rucksack_lines(input: &str) -> IResult<&str, Vec<Rucksack>> {
     )(input)
 }
 
-fn solve_problem(lines: Vec<Rucksack>) {
+fn solve_problem(lines: Vec<Rucksack>) -> (i32, i32) {
 
     let part1 = lines.iter().fold(0i32, |sum: i32, rs: &Rucksack| {
         sum + rs.mismatched_item_code()
     });
-    println!("Part 1: {}", part1);
     let mut part2 = 0i32;
     let mut chunks = lines.chunks(3);
     while let Some([r1, r2, r3]) = chunks.next() {
         part2 += r1.intersect_and_determine_present(r2, r3);
     }
 
-    println!("Part2: {}", part2);
+    (part1, part2)
 }
 
 default_solution!(rucksack_lines, solve_problem);

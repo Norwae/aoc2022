@@ -33,15 +33,12 @@ fn puzzle_input(input: &str) -> IResult<&str, Vec<Elf>> {
     separated_list1(line_ending, elf_supplies)(input)
 }
 
-fn solve_problem(parsed_input: Vec<Elf>) {
-    if parsed_input.len() < 3 {
-        println!("Too few elves");
-    } else {
-        let mut supplies = parsed_input.into_iter().map(|e|e.supplies).collect::<Vec<u64>>();
-        supplies.sort();
-        println!("Part 1: {}", supplies[supplies.len() - 1]);
-        println!("Part 2: {}", supplies[supplies.len() - 3] + supplies[supplies.len() - 2] + supplies[supplies.len() - 1]);
-    }
+fn solve_problem(parsed_input: Vec<Elf>) -> (u64, u64) {
+    let mut supplies = parsed_input.into_iter().map(|e| e.supplies).collect::<Vec<u64>>();
+    supplies.sort();
+    (supplies[supplies.len() - 1],
+     supplies[supplies.len() - 3] + supplies[supplies.len() - 2] + supplies[supplies.len() - 1]
+    )
 }
 
 default_solution!(puzzle_input, solve_problem);
