@@ -1,4 +1,3 @@
-use std::cmp::max;
 use nom::IResult;
 use crate::util;
 
@@ -33,19 +32,15 @@ fn parse(input: &str) -> IResult<&str, Linear2DArray<Tree>> {
     IResult::Ok(("", Linear2DArray::new(storage, width)))
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone)]
 struct SweepState {
     highest: i32,
     visible_at_height: [u32; 10],
 }
 
 fn compute_sweep(mut trees: Linear2DArray<Tree>, direction: Direction) -> Linear2DArray<Tree> {
-    let mut state = SweepState::default();
-    trees.sweep(&mut state, direction, |state| {
-        state.highest = -1;
-        state.visible_at_height.fill(0);
-        true
-    }, |state, _idx, tree| {
+    let state = SweepState { highest: -1, visible_at_height: [0;10]};
+    trees.sweep(state, direction, |state, _idx, tree| {
         let height = tree.height as i32;
         if state.highest >= height {
             tree.blocked = true;
