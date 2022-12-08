@@ -43,70 +43,33 @@ impl<T> Linear2DArray<T> {
         self.storage.iter()
     }
 
-    pub fn sweep_by
-    <State, IndexMutator1, IndexMutator2, LineInit, OnElement>
-    (&mut self, state: &mut State, mut index: Index2D, index_increment: IndexMutator1,
-     line_increment: IndexMutator2, line_init: LineInit, on_element: OnElement,
-    )
-        where IndexMutator1: Fn(&mut Index2D),
-              IndexMutator2: Fn(&mut Index2D),
-              LineInit: Fn(&mut State) -> bool,
-              OnElement: Fn(&mut State, Index2D, &mut T) -> bool
-    {
-        while index.0 < self.width && index.1 < self.height {
-            if !line_init(state) {
-                break;
-            }
-            while index.0 < self.width && index.1 < self.height {
-                if !on_element(state, index.clone(), &mut self[index]) {
-                    break;
-                }
-                index_increment(&mut index)
-            }
-
-            line_increment(&mut index)
-        }
-    }
-
-    pub fn sweep<State, LineInit, OnElement>(&mut self, state: &mut State, dir: Direction, line_init: LineInit, on_element: OnElement)
+    pub fn sweep<State, OnElement>(&mut self, state: State, dir: Direction, on_element: OnElement)
         where
-            LineInit: Fn(&mut State) -> bool,
-            OnElement: Fn(&mut State, Index2D, &mut T) -> bool {
-        let height = self.height;
-        let width = self.width;
-        match dir {
-            Direction::NorthToSouth => self.sweep_by(
-                state,
-                (0, 0).into(),
-                |idx| idx.1 += 1,
-                |idx| *idx = Index2D(idx.0 + 1, 0),
-                line_init,
-                on_element,
-            ),
-            Direction::WestToEast => self.sweep_by(
-                state,
-                (0, 0).into(),
-                |idx| idx.0 += 1,
-                |idx| *idx = Index2D(0, idx.1 + 1),
-                line_init,
-                on_element,
-            ),
-            Direction::SouthToNorth => self.sweep_by(
-                state,
-                (0, self.height - 1).into(),
-                |idx| idx.1 = idx.1.wrapping_sub(1),
-                |idx| *idx = Index2D(idx.0 + 1, height - 1),
-                line_init,
-                on_element,
-            ),
-            Direction::EastToWest => self.sweep_by(
-                state,
-                (self.width - 1, 0).into(),
-                |idx| idx.0 = idx.0.wrapping_sub(1),
-                |idx| *idx = Index2D(width - 1, idx.1 + 1),
-                line_init,
-                on_element,
-            )
+            State: Clone,
+            OnElement: Fn(&mut State, Index2D, &mut T) -> bool
+    {
+
+        let height = self.height as i32;
+        let width = self.width as i32;
+        let (mut x, mut y, delta_x, delta_y, delta_x2, delta_y2) = match dir {
+            Direction::NorthToSouth => (0, 0, 0, 1, 1, -height),
+            Direction::WestToEast => (0, 0, 1, 0, -width, 1),
+            Direction::SouthToNorth => (0, height  - 1, 0, - 1, 1, height),
+            Direction::EastToWest => (width  - 1, 0, -1, 0, width, 1)
+        };
+
+        while x >= 0 && x < width && y >= 0 &&  y < height {
+            let mut state = state.clone();
+            while x >= 0 && x < width && y >= 0 &&  y < height {
+                let idx = Index2D(x as usize, y as usize);
+                let value = &mut self[idx];
+                on_element(&mut state, idx, value);
+                x += delta_x;
+                y += delta_y;
+            }
+
+            x += delta_x2;
+            y += delta_y2;
         }
     }
 }
