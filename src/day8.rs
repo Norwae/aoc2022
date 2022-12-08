@@ -44,7 +44,7 @@ impl Tree {
         }
     }
 
-    fn scenic_score(&self) -> {
+    fn scenic_score(&self) -> i32 {
         self.viewing_distance_north * self.viewing_distance_east * self.viewing_distance_south * self.viewing_distance_west
     }
 
