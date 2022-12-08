@@ -100,7 +100,6 @@ fn rucksack_lines(input: &str) -> IResult<&str, Vec<Rucksack>> {
 }
 
 fn solve_problem(lines: Vec<Rucksack>) -> (i32, i32) {
-
     let part1 = lines.iter().fold(0i32, |sum: i32, rs: &Rucksack| {
         sum + rs.mismatched_item_code()
     });

@@ -59,7 +59,7 @@ impl Problem {
 fn crates(input: &str) -> IResult<&str, Vec<Vec<Option<char>>>> {
     let single_crate_spec = alt((
         map(tag("   "), |_| None),
-        map(delimited(tag("["), anychar, tag("]")), |c|Some(c))
+        map(delimited(tag("["), anychar, tag("]")), |c| Some(c))
     ));
     let line = terminated(separated_list1(tag(" "), single_crate_spec), line_ending);
     let crate_section = many1(line);
@@ -108,7 +108,7 @@ fn parse_input(input: &str) -> IResult<&str, Problem> {
     map(separated_pair(columns, line_ending, moves), |(columns, moves)| Problem { columns, moves, legacy_mode: false })(input)
 }
 
-fn solve_problem(problem: Problem) -> (String, String){
+fn solve_problem(problem: Problem) -> (String, String) {
     let mut part1 = problem.clone();
     part1.legacy_mode = true;
     (part1.run(), problem.run())

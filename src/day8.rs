@@ -28,7 +28,7 @@ impl Tree {
 fn parse(input: &str) -> IResult<&str, Linear2DArray<Tree>> {
     let bytes = input.as_bytes();
     let width = bytes.iter().filter(|b| **b < b'0').count();
-    let storage = bytes.into_iter().filter(|b| **b >= b'0' && **b <= b'9').map(|b|{
+    let storage = bytes.into_iter().filter(|b| **b >= b'0' && **b <= b'9').map(|b| {
         let height = (*b - b'0') as i32;
         Tree::new(height)
     }).collect();
@@ -37,19 +37,18 @@ fn parse(input: &str) -> IResult<&str, Linear2DArray<Tree>> {
 }
 
 fn compute_solution(mut input: Linear2DArray<Tree>) -> (usize, i32) {
-
     #[derive(Debug, Default)]
     struct SweepState {
         highest: i32,
         visible_at_height: [i32; 10],
         visible: usize,
-        best_scenic_score: i32
+        best_scenic_score: i32,
     }
     let mut state = SweepState {
         highest: 0,
         visible_at_height: [0; 10],
         visible: input.height * input.width,
-        best_scenic_score: 0
+        best_scenic_score: 0,
     };
     for dir in Direction::ALL {
         state = input.sweep(state, dir, |state| {

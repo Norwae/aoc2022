@@ -9,7 +9,7 @@ use crate::util::default_solution;
 #[derive(Debug)]
 struct Assignment {
     high: usize,
-    low: usize
+    low: usize,
 }
 
 impl Assignment {
@@ -31,7 +31,7 @@ fn section(input: &str) -> IResult<&str, usize> {
 fn assignment(input: &str) -> IResult<&str, Assignment> {
     map(
         separated_pair(section, tag("-"), section),
-        |(low, high)| Assignment { high, low}
+        |(low, high)| Assignment { high, low },
     )(input)
 }
 
