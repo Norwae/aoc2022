@@ -30,8 +30,8 @@ pub mod linear2d {
     #[derive(Debug)]
     pub struct Linear2DArray<T> {
         storage: Vec<T>,
-        width: usize,
-        height: usize,
+        pub width: usize,
+        pub height: usize,
     }
 
     impl<T> Linear2DArray<T> {
@@ -53,7 +53,7 @@ pub mod linear2d {
         <State, IndexMutator1, IndexMutator2, LineInit, OnElement>
         (&mut self, mut state: State, mut index: Index2D, index_increment: IndexMutator1,
          line_increment: IndexMutator2, line_init: LineInit, on_element: OnElement,
-        )
+        ) -> State
             where IndexMutator1: Fn(&mut Index2D),
                   IndexMutator2: Fn(&mut Index2D),
                   LineInit: Fn(&mut State) -> bool,
@@ -72,9 +72,11 @@ pub mod linear2d {
 
                 line_increment(&mut index)
             }
+
+            state
         }
 
-        pub fn sweep<State, LineInit, OnElement>(&mut self, state: State, dir: Direction, line_init: LineInit, on_element: OnElement)
+        pub fn sweep<State, LineInit, OnElement>(&mut self, state: State, dir: Direction, line_init: LineInit, on_element: OnElement) -> State
             where
                 LineInit: Fn(&mut State) -> bool,
                 OnElement: Fn(&mut State, Index2D, &mut T) -> bool {

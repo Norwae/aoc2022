@@ -1,3 +1,4 @@
+use std::cmp::max;
 use nom::IResult;
 
 use crate::util::{default_solution, linear2d::Direction, linear2d::Linear2DArray};
@@ -40,11 +41,18 @@ fn compute_solution(mut input: Linear2DArray<Tree>) -> (usize, i32) {
     #[derive(Debug, Default)]
     struct SweepState {
         highest: i32,
-        visible_at_height: [i32; 10]
+        visible_at_height: [i32; 10],
+        visible: usize,
+        best_scenic_score: i32
     }
-
+    let mut state = SweepState {
+        highest: 0,
+        visible_at_height: [0; 10],
+        visible: input.height * input.width,
+        best_scenic_score: 0
+    };
     for dir in Direction::ALL {
-        input.sweep(SweepState::default(), dir, |state| {
+        state = input.sweep(state, dir, |state| {
             state.highest = -1;
             state.visible_at_height.fill(0);
             true
@@ -52,12 +60,18 @@ fn compute_solution(mut input: Linear2DArray<Tree>) -> (usize, i32) {
             let height = tree.height;
             if state.highest >= height {
                 tree.blocked_direction_count += 1;
+
+                if !tree.is_visible() {
+                    state.visible -= 1
+                }
             } else {
                 state.highest = height;
             }
 
             let height = height as usize;
             tree.scenic_score *= state.visible_at_height[height];
+            state.best_scenic_score = max(tree.scenic_score, state.best_scenic_score);
+
             (&mut state.visible_at_height[0..=height]).fill(1);
             (&mut state.visible_at_height[(1 + height)..]).iter_mut().for_each(|value| *value += 1);
 
@@ -65,7 +79,7 @@ fn compute_solution(mut input: Linear2DArray<Tree>) -> (usize, i32) {
         });
     }
 
-    (input.iter().filter(|t| t.is_visible()).count(), input.iter().map(|t|t.scenic_score).max().unwrap())
+    (state.visible, state.best_scenic_score)
 }
 
 
