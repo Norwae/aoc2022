@@ -191,11 +191,14 @@ pub fn benchmark_hook(input: &str) {
 
 pub fn solve() {
     let input = crate::util::read_to_eof_line();
+    use std::time::Instant;
+
+    let start = Instant::now();
     let parsed = $parse(&input);
 
     if let Ok(("", input)) = parsed {
         let (part1, part2) = $solve(input);
-        println!("Part 1: {}\nPart 2: {}", part1, part2);
+        println!("Part 1: {}\nPart 2: {}\nTook: {:?}", part1, part2, Instant::now() - start);
     } else {
         println!("Could not parse fully: {:?}", parsed)
     }
