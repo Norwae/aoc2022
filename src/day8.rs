@@ -6,6 +6,7 @@ use nom::IResult;
 use nom::multi::many1;
 use nom::sequence::tuple;
 use crate::util::{default_solution, parse_single_digit, linear2d::Linear2DArray, linear2d::Direction};
+use crate::util::linear2d::Index2D;
 
 #[derive(Debug)]
 struct Tree {
@@ -70,19 +71,19 @@ fn parse(input: &str) -> IResult<&str, Linear2DArray<Tree>> {
 }
 
 fn solve_problem(mut input: Linear2DArray<Tree>) {
-    let max = RefCell::new(-2i32);
+    let max_height = RefCell::new(-2i32);
     for dir in Direction::ALL {
         input.sweep(dir, || {
-            *max.borrow_mut() = -1;
+            *max_height.borrow_mut() = -1;
             true
-        }, |tree| {
+        }, |idx, tree| {
             let height = tree.height;
-            let max_so_far = *max.borrow();
+            let max_so_far = *max_height.borrow();
             let field = tree.blocker_field(dir);
             if max_so_far >= height {
                 *field = max_so_far
             } else {
-                *max.borrow_mut() = height
+                *max_height.borrow_mut() = height;
             }
             true
         });

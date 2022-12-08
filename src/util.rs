@@ -18,6 +18,15 @@ pub mod linear2d {
         pub const ALL: [Direction; 4] = [Direction::NorthToSouth, Direction::WestToEast, Direction::SouthToNorth, Direction::EastToWest];
     }
 
+    #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+    pub struct Index2D(pub usize, pub usize);
+
+    impl From<(usize, usize)> for Index2D {
+        fn from(tpl: (usize, usize)) -> Self {
+            Index2D(tpl.0, tpl.1)
+        }
+    }
+
     #[derive(Debug)]
     pub struct Linear2DArray<T> {
         storage: Vec<T>,
@@ -40,18 +49,18 @@ pub mod linear2d {
             self.storage.iter()
         }
 
-        pub fn sweep_by<IndexMutator1, IndexMutator2, LineInit, Element>(&mut self, mut index: (usize, usize), index_increment: IndexMutator1, line_increment: IndexMutator2, mut line_init: LineInit, mut element: Element)
-            where IndexMutator1: Fn(&mut (usize, usize)),
-                  IndexMutator2: Fn(&mut (usize, usize)),
+        pub fn sweep_by<IndexMutator1, IndexMutator2, LineInit, Element>(&mut self, mut index: Index2D, index_increment: IndexMutator1, line_increment: IndexMutator2, mut line_init: LineInit, mut element: Element)
+            where IndexMutator1: Fn(&mut Index2D),
+                  IndexMutator2: Fn(&mut Index2D),
                   LineInit: FnMut() -> bool,
-                  Element: FnMut(&mut T) -> bool
+                  Element: FnMut(Index2D, &mut T) -> bool
         {
             while index.0 < self.width && index.1 < self.height {
                 if !line_init() {
                     break;
                 }
                 while index.0 < self.width && index.1 < self.height {
-                    if !element(&mut self[index]) {
+                    if !element(index.clone(), &mut self[index]) {
                         break;
                     }
                     index_increment(&mut index)
@@ -63,35 +72,35 @@ pub mod linear2d {
 
         pub fn sweep<LineInit, Element>(&mut self, dir: Direction, line_init: LineInit, element: Element)
             where LineInit: FnMut() -> bool,
-                  Element: FnMut(&mut T) -> bool {
+                  Element: FnMut(Index2D, &mut T) -> bool {
             let height = self.height;
             let width = self.width;
             match dir {
                 Direction::NorthToSouth => self.sweep_by(
-                    (0, 0),
+                    (0, 0).into(),
                     |idx| idx.1 += 1,
-                    |idx| *idx = (idx.0 + 1, 0),
+                    |idx| *idx = Index2D(idx.0 + 1, 0),
                     line_init,
                     element,
                 ),
                 Direction::WestToEast => self.sweep_by(
-                    (0, 0),
+                    (0, 0).into(),
                     |idx| idx.0 += 1,
-                    |idx| *idx = (0, idx.1 + 1),
+                    |idx| *idx = Index2D(0, idx.1 + 1),
                     line_init,
                     element,
                 ),
                 Direction::SouthToNorth => self.sweep_by(
-                    (0, self.height - 1),
+                    (0, self.height - 1).into(),
                     |idx| idx.1 = idx.1.wrapping_sub(1),
-                    |idx| *idx = (idx.0 + 1, height - 1),
+                    |idx| *idx = Index2D(idx.0 + 1, height - 1),
                     line_init,
                     element,
                 ),
                 Direction::EastToWest => self.sweep_by(
-                    (self.width - 1, 0),
+                    (self.width - 1, 0).into(),
                     |idx| idx.0 = idx.0.wrapping_sub(1),
-                    |idx| *idx = (width - 1, idx.1 + 1),
+                    |idx| *idx = Index2D(width - 1, idx.1 + 1),
                     line_init,
                     element,
                 )
@@ -99,20 +108,20 @@ pub mod linear2d {
         }
     }
 
-    impl<T> Index<(usize, usize)> for Linear2DArray<T> {
+    impl<T> Index<Index2D> for Linear2DArray<T> {
         type Output = T;
 
-        fn index(&self, index: (usize, usize)) -> &Self::Output {
-            let (x, y) = index;
+        fn index(&self, index: Index2D) -> &Self::Output {
+            let Index2D(x, y) = index;
             assert!(x < self.width);
             assert!(y < self.height);
             &self.storage[x + y * self.width]
         }
     }
 
-    impl<T> IndexMut<(usize, usize)> for Linear2DArray<T> {
-        fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
-            let (x, y) = index;
+    impl<T> IndexMut<Index2D> for Linear2DArray<T> {
+        fn index_mut(&mut self, index: Index2D) -> &mut Self::Output {
+            let Index2D(x, y) = index;
             assert!(x < self.width);
             assert!(y < self.height);
             &mut self.storage[x + y * self.width]
