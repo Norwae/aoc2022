@@ -13,6 +13,7 @@ static SOLVERS: [fn() -> (); 24] = [
 
 
 fn main() {
+    util::parallel::ensure_ready();
     let day = util::read_usize("Day to solve:");
     if day == 0 || day > 24 {
         println!("{} is out of range (1 to 24)", day)
