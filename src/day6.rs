@@ -23,7 +23,7 @@ fn detect_distinct_range(whole: &[u8], window_size: usize) -> usize {
     usize::MAX
 }
 
-fn solve_problem(input: &str) -> (usize, usize){
+fn solve_problem(input: &str) -> (usize, usize) {
     let bytes = input.as_bytes();
     (detect_distinct_range(bytes, 4),
      detect_distinct_range(bytes, 14))
