@@ -51,8 +51,12 @@ pub fn read_usize(prompt: &str) -> usize {
 
 macro_rules! default_solution {
     ($parse:ident, $solve:ident) => {
-pub fn benchmark_hook(input: &str) {
+pub fn benchmark_full(input: &str) {
        ($solve)(($parse)(input).expect("Example okay").1);
+}
+
+pub fn benchmark_parse(input: &str){
+    $parse(input).expect("Example ok");
 }
 
 pub fn solve() {
