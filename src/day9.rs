@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::fmt::{Debug, Display, Formatter};
+use std::hash::Hash;
 
 use nom::character::complete::{line_ending, one_of, space1};
 use nom::combinator::map;
@@ -44,36 +45,50 @@ impl Index2D {
     }
 }
 
-struct Rope(Vec<Index2D>, HashSet<Index2D>);
+struct Rope {
+    knots: [Index2D; 10],
+    last_tails: HashSet<Index2D>,
+    first_tails: HashSet<Index2D>
+}
 
 impl Rope {
-    fn of_length(size: usize) -> Self {
+    fn new() -> Self {
+        let origin = Index2D(0, 0);
         let mut tails = HashSet::new();
-        tails.insert(Index2D(0, 0));
-        Self(vec![Index2D(0, 0); size + 1], tails)
+        tails.insert(origin);
+        Self {
+            knots: [origin; 10],
+            first_tails: tails.clone(),
+            last_tails: tails
+        }
     }
 
     fn step(&mut self, direction: Direction) {
-        let Rope(knots, tails) = self;
-        knots[0].step(direction);
+        self.knots[0].step(direction);
 
-        for idx in 1..knots.len() {
-            if !Self::reconnect(knots[idx - 1], &mut knots[idx]) {
+        for idx in 1..10 {
+            if !Self::reconnect(self.knots[idx - 1], &mut self.knots[idx]) {
                 break;
             }
         }
-        tails.insert(*knots.last().unwrap());
+
+
+        self.last_tails.insert(self.knots[9]);
+        self.first_tails.insert(self.knots[1]);
     }
 
-    fn tail_locations(&self) -> &HashSet<Index2D> {
-        &self.1
+    fn first_tail_locations(&self) -> &HashSet<Index2D> {
+        &self.first_tails
+    }
+
+    fn last_tail_locations(&self) -> &HashSet<Index2D> {
+        &self.last_tails
     }
 
     fn reconnect(head: Index2D, tail: &mut Index2D) -> bool {
         if head.max_distance(*tail) > 1 {
             tail.0 += (head.0 - tail.0).signum();
             tail.1 += (head.1 - tail.1).signum();
-
             true
         } else {
             false
@@ -100,19 +115,16 @@ fn parse_move(input: &str) -> IResult<&str, Vec<Move>> {
 }
 
 fn solve_problem(moves: Vec<Move>) -> (usize, usize) {
-    let mut rope1 = Rope::of_length(1);
-    let mut rope2 = Rope::of_length(9);
+    let mut rope = Rope::new();
 
     for Move { direction, steps } in moves {
         for _ in 0..steps {
-
-            rope1.step(direction);
-            rope2.step(direction);
+            rope.step(direction);
         }
     }
 
 
-    (rope1.tail_locations().len(), rope2.tail_locations().len())
+    (rope.first_tail_locations().len(), rope.last_tail_locations().len())
 }
 
 default_solution!(parse_move, solve_problem);
