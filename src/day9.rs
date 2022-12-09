@@ -1,12 +1,14 @@
 use std::collections::HashSet;
 use std::fmt::{Debug, Display, Formatter};
+
 use nom::character::complete::{line_ending, one_of, space1};
 use nom::combinator::map;
 use nom::IResult;
 use nom::multi::many1;
 use nom::sequence::{separated_pair, terminated};
-use crate::util::linear2d::Direction;
+
 use crate::util::{default_solution, parse_usize};
+use crate::util::linear2d::Direction;
 
 #[derive(Debug)]
 struct Move {
@@ -42,50 +44,39 @@ impl Index2D {
     }
 }
 
-#[derive(Debug)]
-struct RopeKnot {
-    head: Index2D,
-    tail: Option<Box<RopeKnot>>,
-}
+struct Rope(Vec<Index2D>, HashSet<Index2D>);
 
-impl Display for RopeKnot {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("({}, {})", self.head.0, self.head.1))?;
-        if let Some(tail) = &self.tail {
-            f.write_str(" -> ")?;
-            Display::fmt(tail, f)
-        } else {
-            Ok(())
-        }
-    }
-}
-
-impl RopeKnot {
-    fn of_length(size: usize) -> RopeKnot {
-        let head = Index2D(0, 0);
-        let tail = if size == 0 {
-            None
-        } else {
-            Some(Box::new(Self::of_length(size - 1)))
-        };
-        Self { head, tail }
+impl Rope {
+    fn of_length(size: usize) -> Self {
+        let mut tails = HashSet::new();
+        tails.insert(Index2D(0, 0));
+        Self(vec![Index2D(0, 0); size + 1], tails)
     }
 
-    fn step<TT>(&mut self, direction: Direction, tail_tracking: TT) where TT: FnMut(Index2D) {
-        self.head = self.head.step(direction);
-        self.reconnect(tail_tracking)
-    }
+    fn step(&mut self, direction: Direction) {
+        let Rope(knots, tails) = self;
+        knots[0].step(direction);
 
-    fn reconnect<TT>(&mut self, mut tail_tracking: TT) where TT: FnMut(Index2D) {
-        if let Some(tail) = &mut self.tail {
-            if self.head.max_distance(tail.head) > 1 {
-                tail.head.0 += (self.head.0 - tail.head.0).signum();
-                tail.head.1 += (self.head.1 - tail.head.1).signum();
-
-                tail.reconnect(tail_tracking);
+        for idx in 1..knots.len() {
+            if !Self::reconnect(knots[idx - 1], &mut knots[idx]) {
+                break;
             }
+        }
+        tails.insert(*knots.last().unwrap());
+    }
+
+    fn tail_locations(&self) -> &HashSet<Index2D> {
+        &self.1
+    }
+
+    fn reconnect(head: Index2D, tail: &mut Index2D) -> bool {
+        if head.max_distance(*tail) > 1 {
+            tail.0 += (head.0 - tail.0).signum();
+            tail.1 += (head.1 - tail.1).signum();
+
+            true
         } else {
-            tail_tracking(self.head)
+            false
         }
     }
 }
@@ -109,26 +100,19 @@ fn parse_move(input: &str) -> IResult<&str, Vec<Move>> {
 }
 
 fn solve_problem(moves: Vec<Move>) -> (usize, usize) {
-    let mut rope1 = RopeKnot::of_length(1);
-    let mut rope2 = RopeKnot::of_length(9);
-    let mut visited_1 = HashSet::new();
-    let mut visited_2 = HashSet::new();
-    visited_1.insert(rope1.head);
-    visited_2.insert(rope2.head);
+    let mut rope1 = Rope::of_length(1);
+    let mut rope2 = Rope::of_length(9);
 
     for Move { direction, steps } in moves {
         for _ in 0..steps {
-            rope1.step(direction, |idx| {
-                visited_1.insert(idx);
-            });
-            rope2.step(direction, |idx|{
-                visited_2.insert(idx);
-            });
+
+            rope1.step(direction);
+            rope2.step(direction);
         }
     }
 
 
-    (visited_1.len(), visited_2.len())
+    (rope1.tail_locations().len(), rope2.tail_locations().len())
 }
 
 default_solution!(parse_move, solve_problem);
