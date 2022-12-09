@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
+use std::ops::Shl;
 
 use nom::character::complete::{line_ending, one_of, space1};
 use nom::combinator::map;
@@ -37,6 +38,10 @@ impl Index2D {
         }
     }
 
+    fn fingerprint(self) -> u64 {
+        (self.0 as u64).shl(32) | (self.1 as u64)
+    }
+
     pub fn max_distance(self, other: Index2D) -> usize {
         let Index2D(x1, y1) = self;
         let Index2D(x2, y2) = other;
@@ -47,15 +52,15 @@ impl Index2D {
 
 struct Rope {
     knots: [Index2D; 10],
-    last_tails: HashSet<Index2D>,
-    first_tails: HashSet<Index2D>
+    last_tails: HashSet<u64>,
+    first_tails: HashSet<u64>
 }
 
 impl Rope {
     fn new() -> Self {
         let origin = Index2D(0, 0);
         let mut tails = HashSet::new();
-        tails.insert(origin);
+        tails.insert(origin.fingerprint());
         Self {
             knots: [origin; 10],
             first_tails: tails.clone(),
@@ -73,15 +78,15 @@ impl Rope {
         }
 
 
-        self.last_tails.insert(self.knots[9]);
-        self.first_tails.insert(self.knots[1]);
+        self.last_tails.insert(self.knots[9].fingerprint());
+        self.first_tails.insert(self.knots[1].fingerprint());
     }
 
-    fn first_tail_locations(&self) -> &HashSet<Index2D> {
+    fn first_tail_locations(&self) -> &HashSet<u64> {
         &self.first_tails
     }
 
-    fn last_tail_locations(&self) -> &HashSet<Index2D> {
+    fn last_tail_locations(&self) -> &HashSet<u64> {
         &self.last_tails
     }
 
