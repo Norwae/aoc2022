@@ -3,18 +3,21 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use adventofcode::{day7, day8, day9};
 
 fn day7_full(c: &mut Criterion) {
-    c.bench_function("day7_full", |bencher|bencher.iter(||day7::benchmark_hook(DAY7_INPUT)));
+    c.bench_function("day7_full", |bencher|bencher.iter(||day7::benchmark_full(DAY7_INPUT)));
 }
 
 fn day8_full(c: &mut Criterion) {
-    c.bench_function("day8_full", |bencher| bencher.iter(||day8::benchmark_hook(DAY8_INPUT)));
+    c.bench_function("day8_full", |bencher| bencher.iter(||day8::benchmark_full(DAY8_INPUT)));
 }
 
+fn day9_parse(c: &mut Criterion) {
+    c.bench_function("day9_parse", |bencher| bencher.iter(||day9::benchmark_parse(DAY9_INPUT)));
+}
 fn day9_full(c: &mut Criterion) {
-    c.bench_function("day9_full", |bencher| bencher.iter(||day9::benchmark_hook(DAY9_INPUT)));
+    c.bench_function("day9_full", |bencher| bencher.iter(||day9::benchmark_full(DAY9_INPUT)));
 }
 
-criterion_group!(benches, day7_full, day8_full, day9_full);
+criterion_group!(benches, day7_full, day8_full, day9_parse, day9_full);
 criterion_main!(benches);
 
 const DAY7_INPUT: &'static str = "$ cd /
