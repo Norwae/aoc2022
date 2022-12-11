@@ -1,13 +1,19 @@
 use std::io::stdin;
+use nom::bytes::complete::tag;
 use nom::character::complete::{digit1};
-use nom::combinator::map;
+use nom::combinator::{map, opt, recognize};
 use nom::IResult;
+use nom::sequence::{tuple, Tuple};
 
 pub mod linear2d;
 pub mod parallel;
 
 pub fn parse_usize(input: &str) -> IResult<&str, usize> {
     map(digit1, |str: &str| str.parse::<usize>().expect("digits -> usize"))(input)
+}
+
+pub fn parse_i64(input: &str) -> IResult<&str, i64> {
+    map(recognize(tuple((opt(tag("-")), digit1))), |slice: &str|slice.parse::<i64>().expect("digits -> int"))(input)
 }
 
 pub fn parse_identity(input: &str) -> IResult<&str, &str> {
