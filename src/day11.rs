@@ -1,14 +1,14 @@
 use std::fmt::{Display, Formatter};
 use std::mem::swap;
-use nom::{IResult, Parser};
+use nom::IResult;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
-use nom::character::complete::{alpha1, line_ending, one_of, space1};
+use nom::character::complete::{line_ending, one_of, space1};
 use nom::combinator::map;
-use nom::multi::{many1, separated_list0, separated_list1};
-use nom::sequence::{delimited, preceded, terminated, tuple};
+use nom::multi::{separated_list0, separated_list1};
+use nom::sequence::{preceded, tuple};
 
-use crate::util::{default_solution, parse_i64, parse_usize};
+use crate::util::{default_solution, parse_usize};
 
 #[derive(Debug, Copy, Clone)]
 enum Operand {
@@ -43,18 +43,6 @@ impl Operator {
     }
 }
 
-#[derive(Debug)]
-struct Assignment {
-    to: usize,
-    items: Vec<usize>
-}
-
-impl Assignment {
-    fn transfer_to(mut self, monkeys: &mut [Monkey]) {
-        monkeys[self.to].inventory.append(&mut self.items);
-    }
-}
-
 #[derive(Debug, Clone)]
 struct Monkey {
     number: usize,
@@ -75,34 +63,28 @@ impl Display for Monkey {
 }
 
 impl Monkey {
-    fn distribute_inventory(&mut self, calmdown_factor: usize, great_monkey_modulus: usize) -> (Assignment, Assignment){
-        let mut zero = Assignment {
-            to: self.goto_on_zero,
-            items: Vec::new()
-        };
-        let mut nonzero = Assignment {
-            to: self.goto_on_nonzero,
-            items: Vec::new()
-        };
-        let mut inventory = Vec::new();
-        swap(&mut inventory, &mut self.inventory);
+    fn distribute_inventory(monkeys: &mut [Monkey], self_idx: usize, calmdown_factor: usize, great_monkey_modulus: usize) {
+        let mut this = Monkey { number: usize::MAX, operator: Operator::Plus, left_operand: Operand::Old, right_operand: Operand::Old, module: 1, goto_on_nonzero: 0, goto_on_zero: 0, inventory: Vec::new(), inspections_performed: 0  };
+        swap(&mut this, &mut monkeys[self_idx]);
 
-        for initial_worry_level in inventory {
-            self.inspections_performed += 1;
-            let after_inspect = self.operator.perform(self.left_operand, self.right_operand, initial_worry_level);
+
+        for initial_worry_level in this.inventory {
+            this.inspections_performed += 1;
+            let after_inspect = this.operator.perform(this.left_operand, this.right_operand, initial_worry_level);
             let after_calm_down = after_inspect / calmdown_factor;
 
-            let target = if after_calm_down % self.module == 0 {
-                &mut zero.items
+            let target = if after_calm_down % this.module == 0 {
+                &mut monkeys[this.goto_on_zero].inventory
             } else {
-                &mut nonzero.items
+                &mut monkeys[this.goto_on_nonzero].inventory
             };
 
             target.push(after_calm_down % great_monkey_modulus)
         }
 
+        this.inventory = Vec::new();
 
-        (zero, nonzero)
+        swap(&mut this, &mut monkeys[self_idx]);
     }
 }
 
@@ -197,9 +179,7 @@ fn solve_problem(mut source: Vec<Monkey>) -> (i64, i64){
     let monkeys = &mut part1;
     for _ in 0..20 {
         for i in 0..monkeys.len() {
-            let (a1, a2) = monkeys[i].distribute_inventory(3, great_monkey_modulus);
-            a1.transfer_to(monkeys);
-            a2.transfer_to(monkeys);
+            Monkey::distribute_inventory(monkeys, i, 3, great_monkey_modulus);
         }
     }
 
@@ -210,9 +190,7 @@ fn solve_problem(mut source: Vec<Monkey>) -> (i64, i64){
     let monkeys = &mut source;
     for _ in 0..10000 {
         for i in 0..monkeys.len() {
-            let (a1, a2) = monkeys[i].distribute_inventory(1, great_monkey_modulus);
-            a1.transfer_to(monkeys);
-            a2.transfer_to(monkeys);
+            Monkey::distribute_inventory(monkeys, i, 1, great_monkey_modulus);
         }
     }
 

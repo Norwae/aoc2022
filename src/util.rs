@@ -3,7 +3,7 @@ use nom::bytes::complete::tag;
 use nom::character::complete::{digit1};
 use nom::combinator::{map, opt, recognize};
 use nom::IResult;
-use nom::sequence::{tuple, Tuple};
+use nom::sequence::tuple;
 
 pub mod linear2d;
 pub mod parallel;

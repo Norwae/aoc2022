@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
-use std::ops::Shl;
 
 use nom::character::complete::{line_ending, one_of, space1};
 use nom::combinator::map;
