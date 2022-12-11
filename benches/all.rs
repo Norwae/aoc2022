@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 
-use adventofcode::{day7, day8, day9};
+use adventofcode::{day7, day8, day9, day10, day11};
 
 fn day7_full(c: &mut Criterion) {
     c.bench_function("day7_full", |bencher|bencher.iter(||day7::benchmark_full(DAY7_INPUT)));
@@ -17,7 +17,18 @@ fn day9_full(c: &mut Criterion) {
     c.bench_function("day9_full", |bencher| bencher.iter(||day9::benchmark_full(DAY9_INPUT)));
 }
 
-criterion_group!(benches, day7_full, day8_full, day9_parse, day9_full);
+fn day10_full(c: &mut Criterion) {
+    c.bench_function("day10_full", |bencher| bencher.iter(||day10::benchmark_full(DAY10_INPUT)));
+}
+
+fn day11_parse(c: &mut Criterion) {
+    c.bench_function("day11_parse", |bencher| bencher.iter(||day11::benchmark_parse(DAY11_INPUT)));
+}
+fn day11_full(c: &mut Criterion) {
+    c.bench_function("day11_full", |bencher| bencher.iter(||day11::benchmark_full(DAY11_INPUT)));
+}
+
+criterion_group!(benches, day7_full, day8_full, day9_parse, day9_full, day10_full, day11_parse, day11_full);
 criterion_main!(benches);
 
 const DAY7_INPUT: &'static str = "$ cd /
@@ -3258,4 +3269,207 @@ R 10
 L 14
 R 15
 U 10
+";
+
+const DAY10_INPUT: &'static str = "noop
+addx 33
+addx -30
+noop
+noop
+addx 7
+addx 1
+noop
+noop
+addx 3
+addx 3
+addx 3
+addx -4
+addx 5
+addx 2
+noop
+addx 7
+noop
+addx 1
+addx 4
+noop
+addx 1
+addx -38
+noop
+addx 16
+addx -13
+addx 2
+addx 7
+noop
+addx -2
+addx -10
+addx 17
+addx -5
+addx 10
+noop
+addx -15
+addx 16
+addx 2
+noop
+noop
+addx 7
+addx 3
+addx -2
+addx 2
+addx 5
+addx -38
+addx 7
+addx -6
+addx 2
+noop
+addx 7
+noop
+addx 1
+addx 4
+noop
+noop
+noop
+noop
+noop
+addx 3
+noop
+addx 3
+addx 2
+noop
+addx 7
+noop
+addx -20
+addx 21
+addx 3
+addx 1
+addx -35
+addx 1
+addx 4
+noop
+addx 31
+noop
+addx -26
+addx 5
+noop
+noop
+addx -2
+addx 25
+addx -18
+addx -13
+addx 14
+addx 2
+noop
+noop
+noop
+addx 6
+addx 1
+addx 5
+addx 3
+addx -2
+addx -38
+addx 24
+addx -17
+addx 5
+noop
+noop
+addx -2
+addx 31
+addx -24
+addx 7
+addx -10
+addx 6
+noop
+addx 3
+addx 2
+noop
+noop
+addx 7
+addx -2
+addx -26
+addx 31
+addx 5
+addx -40
+addx 5
+addx 33
+addx -31
+noop
+addx 1
+addx 4
+addx 1
+addx 4
+addx 20
+noop
+noop
+addx -14
+addx -1
+addx 5
+noop
+noop
+addx 1
+addx 2
+noop
+noop
+addx 7
+noop
+noop
+noop
+noop
+noop
+noop
+";
+
+const DAY11_INPUT: &'static str = "Monkey 0:
+  Starting items: 57, 58
+  Operation: new = old * 19
+  Test: divisible by 7
+    If true: throw to monkey 2
+    If false: throw to monkey 3
+
+Monkey 1:
+  Starting items: 66, 52, 59, 79, 94, 73
+  Operation: new = old + 1
+  Test: divisible by 19
+    If true: throw to monkey 4
+    If false: throw to monkey 6
+
+Monkey 2:
+  Starting items: 80
+  Operation: new = old + 6
+  Test: divisible by 5
+    If true: throw to monkey 7
+    If false: throw to monkey 5
+
+Monkey 3:
+  Starting items: 82, 81, 68, 66, 71, 83, 75, 97
+  Operation: new = old + 5
+  Test: divisible by 11
+    If true: throw to monkey 5
+    If false: throw to monkey 2
+
+Monkey 4:
+  Starting items: 55, 52, 67, 70, 69, 94, 90
+  Operation: new = old * old
+  Test: divisible by 17
+    If true: throw to monkey 0
+    If false: throw to monkey 3
+
+Monkey 5:
+  Starting items: 69, 85, 89, 91
+  Operation: new = old + 7
+  Test: divisible by 13
+    If true: throw to monkey 1
+    If false: throw to monkey 7
+
+Monkey 6:
+  Starting items: 75, 53, 73, 52, 75
+  Operation: new = old * 7
+  Test: divisible by 2
+    If true: throw to monkey 0
+    If false: throw to monkey 4
+
+Monkey 7:
+  Starting items: 94, 60, 79
+  Operation: new = old + 2
+  Test: divisible by 3
+    If true: throw to monkey 1
+    If false: throw to monkey 6
 ";

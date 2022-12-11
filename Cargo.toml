@@ -9,6 +9,7 @@ edition = "2021"
 
 nom = "7.1"
 lazy_static = "1.4"
+num = "0.4"
 tokio = { version = "1.21", features = ["full"] }
 
 [dev-dependencies]
