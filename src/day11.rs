@@ -63,7 +63,7 @@ impl Display for Monkey {
 }
 
 impl Monkey {
-    fn distribute_inventory(monkeys: &mut [Monkey], self_idx: usize, calmdown_factor: usize, great_monkey_modulus: usize) {
+    fn distribute_inventory<Calm>(monkeys: &mut [Monkey], self_idx: usize, great_monkey_modulus: usize, calm: Calm) where Calm: Fn(usize) -> usize {
         let mut this = Monkey { number: usize::MAX, operator: Operator::Plus, left_operand: Operand::Old, right_operand: Operand::Old, module: 1, goto_on_nonzero: 0, goto_on_zero: 0, inventory: Vec::new(), inspections_performed: 0  };
         swap(&mut this, &mut monkeys[self_idx]);
 
@@ -71,7 +71,7 @@ impl Monkey {
         for initial_worry_level in &this.inventory {
             this.inspections_performed += 1;
             let after_inspect = this.operator.perform(this.left_operand, this.right_operand, *initial_worry_level);
-            let after_calm_down = after_inspect / calmdown_factor;
+            let after_calm_down = calm(after_inspect);
 
             let target = if after_calm_down % this.module == 0 {
                 &mut monkeys[this.goto_on_zero].inventory
@@ -85,6 +85,7 @@ impl Monkey {
         this.inventory.clear();
 
         swap(&mut this, &mut monkeys[self_idx]);
+        assert!(this.inventory.is_empty())
     }
 }
 
@@ -179,7 +180,7 @@ fn solve_problem(mut source: Vec<Monkey>) -> (i64, i64){
     let monkeys = &mut part1;
     for _ in 0..20 {
         for i in 0..monkeys.len() {
-            Monkey::distribute_inventory(monkeys, i, 3, great_monkey_modulus);
+            Monkey::distribute_inventory(monkeys, i, great_monkey_modulus, |x| x / 3);
         }
     }
 
@@ -190,7 +191,7 @@ fn solve_problem(mut source: Vec<Monkey>) -> (i64, i64){
     let monkeys = &mut source;
     for _ in 0..10000 {
         for i in 0..monkeys.len() {
-            Monkey::distribute_inventory(monkeys, i, 1, great_monkey_modulus);
+            Monkey::distribute_inventory(monkeys, i, great_monkey_modulus, |x|x);
         }
     }
 
