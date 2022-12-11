@@ -16,29 +16,25 @@ enum Operand {
     Const(usize),
 }
 
-impl Operand {
-    fn eval(self, old: usize) -> usize {
-        match self {
-            Operand::Old => old,
-            Operand::Const(v) => v
-        }
-    }
-}
-
 #[derive(Debug, Copy, Clone)]
 enum Operator {
     Plus,
     Multiply,
 }
 
-impl Operator {
-    fn perform(&self, lhs: Operand, rhs: Operand, old: usize) -> usize {
-        let lhs = lhs.eval(old);
-        let rhs = rhs.eval(old);
+#[derive(Debug, Clone, Copy)]
+enum Operation {
+    Square,
+    IncrementBy(usize),
+    MultiplyBy(usize)
+}
 
+impl Operation {
+    fn perform(self, old: usize) -> usize {
         match self {
-            Operator::Plus => lhs + rhs,
-            Operator::Multiply => lhs * rhs
+            Operation::Square => old * old,
+            Operation::IncrementBy(n) => old + n,
+            Operation::MultiplyBy(n) => old * n
         }
     }
 }
@@ -46,9 +42,7 @@ impl Operator {
 #[derive(Debug, Clone)]
 struct Monkey {
     number: usize,
-    operator: Operator,
-    left_operand: Operand,
-    right_operand: Operand,
+    operation: Operation,
     module: usize,
     goto_on_zero: usize,
     goto_on_nonzero: usize,
@@ -64,13 +58,13 @@ impl Display for Monkey {
 
 impl Monkey {
     fn distribute_inventory<Calm>(monkeys: &mut [Monkey], self_idx: usize, great_monkey_modulus: usize, calm: Calm) where Calm: Fn(usize) -> usize {
-        let mut this = Monkey { number: usize::MAX, operator: Operator::Plus, left_operand: Operand::Old, right_operand: Operand::Old, module: 1, goto_on_nonzero: 0, goto_on_zero: 0, inventory: Vec::new(), inspections_performed: 0  };
+        let mut this = Monkey { number: usize::MAX, operation: Operation::MultiplyBy(0), module: 1, goto_on_nonzero: 0, goto_on_zero: 0, inventory: Vec::new(), inspections_performed: 0  };
         swap(&mut this, &mut monkeys[self_idx]);
 
 
         for initial_worry_level in &this.inventory {
             this.inspections_performed += 1;
-            let after_inspect = this.operator.perform(this.left_operand, this.right_operand, *initial_worry_level);
+            let after_inspect = this.operation.perform(*initial_worry_level);
             let after_calm_down = calm(after_inspect);
 
             let target = if after_calm_down % this.module == 0 {
@@ -100,15 +94,18 @@ fn parse_operand(input: &str) -> IResult<&str, Operand> {
     ))(input)
 }
 
-fn parse_operation(input: &str) -> IResult<&str, (Operand, Operator, Operand)> {
+fn parse_operation(input: &str) -> IResult<&str, Operation> {
     map(tuple((
-        tag("  Operation: new = "),
-        parse_operand,
-        space1,
+        tag("  Operation: new = old "),
         parse_operator,
         space1,
         parse_operand
-    )), |(_, lhs, _, op, _, rhs)| (lhs, op, rhs))(input)
+    )), |(_, op, _, rhs)| match (op, rhs) {
+        (Operator::Multiply, Operand::Old) => Operation::Square,
+        (Operator::Multiply, Operand::Const(n)) => Operation::MultiplyBy(n),
+        (Operator::Plus, Operand::Const(n)) => Operation::IncrementBy(n),
+        (Operator::Plus, Operand::Old) => Operation::MultiplyBy(2)
+    })(input)
 }
 
 fn parse_throw_target(input: &str) -> IResult<&str, usize> {
@@ -153,11 +150,9 @@ fn parse_monkey(input: &str) -> IResult<&str, Monkey> {
             parse_throw_target,
             line_ending)
         ),
-        | (number, _, inventory, _, (left_operand, operator, right_operand), _, module, _, goto_on_zero, _, goto_on_nonzero, _) | Monkey {
+        | (number, _, inventory, _, operation, _, module, _, goto_on_zero, _, goto_on_nonzero, _) | Monkey {
             number,
-            operator,
-            left_operand,
-            right_operand,
+            operation,
             module,
             goto_on_zero,
             goto_on_nonzero,
