@@ -1,10 +1,10 @@
 use nom::branch::alt;
 use nom::bytes::complete::tag;
-use nom::character::complete::{line_ending, space1};
-use nom::combinator::{map, value};
+use nom::character::complete::line_ending;
+use nom::combinator::map;
 use nom::IResult;
 use nom::multi::many1;
-use nom::sequence::{preceded, separated_pair, terminated};
+use nom::sequence::{preceded, terminated};
 use crate::util::{default_solution, parse_i64};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
