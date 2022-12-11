@@ -68,9 +68,9 @@ impl Monkey {
         swap(&mut this, &mut monkeys[self_idx]);
 
 
-        for initial_worry_level in this.inventory {
+        for initial_worry_level in &this.inventory {
             this.inspections_performed += 1;
-            let after_inspect = this.operator.perform(this.left_operand, this.right_operand, initial_worry_level);
+            let after_inspect = this.operator.perform(this.left_operand, this.right_operand, *initial_worry_level);
             let after_calm_down = after_inspect / calmdown_factor;
 
             let target = if after_calm_down % this.module == 0 {
@@ -82,7 +82,7 @@ impl Monkey {
             target.push(after_calm_down % great_monkey_modulus)
         }
 
-        this.inventory = Vec::new();
+        this.inventory.clear();
 
         swap(&mut this, &mut monkeys[self_idx]);
     }
