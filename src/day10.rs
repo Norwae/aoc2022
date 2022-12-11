@@ -1,7 +1,7 @@
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{line_ending, space1};
-use nom::combinator::map;
+use nom::combinator::{map, value};
 use nom::IResult;
 use nom::multi::many1;
 use nom::sequence::{preceded, separated_pair, terminated};
@@ -10,48 +10,84 @@ use crate::util::{default_solution, parse_i64};
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum Command{
     Nop,
-    AddX(i64)
+    StartAddX,
+    CompleteAddX(i64)
 }
 
-fn nop(input: &str) -> IResult<&str, Command> {
-    map(tag("noop"), |_|Command::Nop)(input)
+#[derive(Debug, Clone)]
+enum Slotted<X> {
+    One(X),
+    Two(X, X)
 }
 
-fn add_x(input: &str) -> IResult<&str, Command> {
-    map(preceded(tag("addx "), parse_i64), |value| Command::AddX(value))(input)
+fn nop(input: &str) -> IResult<&str, Slotted<Command>> {
+    map(tag("noop"), |_|Slotted::One(Command::Nop))(input)
+}
+
+fn add_x(input: &str) -> IResult<&str, Slotted<Command>> {
+    map(preceded(tag("addx "), parse_i64), |value| Slotted::Two(Command::StartAddX, Command::CompleteAddX(value)))(input)
 }
 
 fn parse(input: &str) -> IResult<&str, Vec<Command>> {
-    many1(terminated(alt((
+    map(
+        many1(terminated(alt((
         nop, add_x
-        )), line_ending))(input)
+        )), line_ending)),
+        |slots| {
+            let mut target = Vec::with_capacity(2 * slots.len());
+            for slot in slots {
+                match slot {
+                    Slotted::One(cmd) => target.push(cmd),
+                    Slotted::Two(cmd1, cmd2) => {
+                        target.push(cmd1);
+                        target.push(cmd2);
+                    }
+                }
+            }
+            target
+        })(input)
 }
 
-fn run(commands: Vec<Command>) -> (i64, i64) {
+fn run(commands: Vec<Command>) -> (i64, String) {
     static PROBES: [usize;7] = [20, 60, 100, 140, 180, 220, usize::MAX];
     let mut probes: &[usize] = &PROBES;
-    let mut clock = 0;
+    let mut clock = 1;
+    let mut crt_col = 0;
     let mut x_register = 1i64;
+    let mut crt_buffer = String::from('\n');
 
     let mut signal_strength_sum = 0;
 
-    for cmd in commands {
-        let (delta_x, delta_time) = match cmd {
-            Command::AddX(value) => (value, 2),
-            _ => (0, 1)
-        };
-
-        if clock + delta_time >= probes[0] {
+    for command in commands {
+        if clock == probes[0] {
             let signal_strength = x_register * probes[0] as i64;
             signal_strength_sum += signal_strength;
             probes = &probes[1..];
         }
 
-        clock += delta_time;
-        x_register += delta_x;
+        let crt_scan_char = if x_register >= crt_col - 1 && x_register <= crt_col + 1 {
+            '#'
+        } else {
+            '.'
+        };
+
+        crt_buffer.push(crt_scan_char);
+
+        if let Command::CompleteAddX(value) = command {
+            x_register += value;
+        }
+
+        crt_col += 1;
+        clock += 1;
+
+        if crt_col == 40 {
+            crt_buffer.push('\n');
+            crt_col = 0;
+        }
+
     }
 
-    (signal_strength_sum, 0)
+    (signal_strength_sum, crt_buffer)
 }
 
 default_solution!(parse, run);
