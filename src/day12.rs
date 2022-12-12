@@ -98,7 +98,11 @@ fn include_into_map(map: &mut Map, path: Vec<Index2D>) {
     let mut terminating_known_length = map.heights[terminating_index].best_path_length.expect("terminating into known length");
 
     for index in path.iter().rev().skip(1) {
-        terminating_known_length += 1;
+        terminating_known_length = if terminating_known_length == usize::MAX {
+            usize::MAX
+        } else {
+            terminating_known_length + 1
+        };
         map.heights[*index].best_path_length = Some(terminating_known_length)
     }
 }
@@ -119,6 +123,8 @@ fn solve_problem(mut map: Map) -> (usize, usize) {
                     if length_from_here < best {
                         best = length_from_here
                     }
+                } else {
+                    map.heights[idx].best_path_length = Some(usize::MAX)
                 }
             }
         }
