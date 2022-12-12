@@ -1,6 +1,5 @@
 use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut};
-use std::path::Iter;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Direction {
