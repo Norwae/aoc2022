@@ -1,4 +1,6 @@
+use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut};
+use std::path::Iter;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Direction {
@@ -8,12 +10,33 @@ pub enum Direction {
     EastToWest,
 }
 
-impl Direction {
-    pub const ALL: [Direction; 4] = [Direction::NorthToSouth, Direction::WestToEast, Direction::SouthToNorth, Direction::EastToWest];
-}
+pub static ALL: [Direction; 4] = [Direction::NorthToSouth, Direction::WestToEast, Direction::SouthToNorth, Direction::EastToWest];
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Index2D(pub usize, pub usize);
+
+impl Hash for Index2D {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_usize(self.0);
+        state.write_usize(self.1);
+    }
+}
+
+impl Index2D {
+    pub fn max_distance(self, other: Self) -> usize {
+        ((self.0 as i64 - other.0 as i64).abs() as usize) + ((self.1 as i64 - other.1 as i64).abs() as usize)
+    }
+
+    pub fn step(self, dir: Direction) -> Self {
+        let Self(x, y) = self;
+        match dir {
+            Direction::NorthToSouth => Self(x, y + 1),
+            Direction::WestToEast => Self(x + 1, y),
+            Direction::SouthToNorth => Self(x, y - 1),
+            Direction::EastToWest => Self(x - 1, y)
+        }
+    }
+}
 
 impl From<(usize, usize)> for Index2D {
     fn from(tpl: (usize, usize)) -> Self {
@@ -43,24 +66,52 @@ impl<T> Linear2DArray<T> {
         self.storage.iter()
     }
 
+
+    pub fn indices(&self) -> impl Iterator<Item=Index2D> {
+        struct Iter {
+            count: usize,
+            width: usize,
+            height: usize
+        }
+
+        impl Iterator for Iter {
+            type Item = Index2D;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                if self.count >= self.width * self.height {
+                    None
+                } else {
+                    let count = self.count;
+                    self.count += 1;
+                    Some(Index2D(count % self.width, count / self.width))
+                }
+            }
+        }
+
+        Iter {
+            count: 0,
+            width: self.width,
+            height: self.height
+        }
+    }
+
     pub fn sweep<State, OnElement>(&mut self, state: State, dir: Direction, on_element: OnElement)
         where
             State: Clone,
             OnElement: Fn(&mut State, Index2D, &mut T) -> bool
     {
-
         let height = self.height as i32;
         let width = self.width as i32;
         let (mut x, mut y, delta_x, delta_y, delta_x2, delta_y2) = match dir {
             Direction::NorthToSouth => (0, 0, 0, 1, 1, -height),
             Direction::WestToEast => (0, 0, 1, 0, -width, 1),
-            Direction::SouthToNorth => (0, height  - 1, 0, - 1, 1, height),
-            Direction::EastToWest => (width  - 1, 0, -1, 0, width, 1)
+            Direction::SouthToNorth => (0, height - 1, 0, -1, 1, height),
+            Direction::EastToWest => (width - 1, 0, -1, 0, width, 1)
         };
 
-        while x >= 0 && x < width && y >= 0 &&  y < height {
+        while x >= 0 && x < width && y >= 0 && y < height {
             let mut state = state.clone();
-            while x >= 0 && x < width && y >= 0 &&  y < height {
+            while x >= 0 && x < width && y >= 0 && y < height {
                 let idx = Index2D(x as usize, y as usize);
                 let value = &mut self[idx];
                 on_element(&mut state, idx, value);
