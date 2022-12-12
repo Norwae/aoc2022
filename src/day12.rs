@@ -10,6 +10,7 @@ const END: i32 = 27;
 #[derive(Debug, Clone)]
 struct Cell {
     height: i32,
+    best_path_length: Option<usize>
 }
 
 #[derive(Debug, Clone)]
@@ -36,6 +37,7 @@ fn insert_line(storage: &mut Vec<Cell>, start: &mut Index2D, end: &mut Index2D, 
 
         let cell = Cell {
             height,
+            best_path_length: None
         };
         storage.push(cell)
     }
@@ -52,7 +54,7 @@ fn parse_input(input: &str) -> IResult<&str, Map> {
 
     let first_line = lines.next().expect("Nonempty input");
     let width = first_line.len() + 2;
-    let border_cell = Cell { height: i32::MAX };
+    let border_cell = Cell { height: i32::MAX, best_path_length: None };
     storage.append(&mut vec![border_cell.clone(); width]);
     insert_line(&mut storage, &mut start, &mut end, first_line, &border_cell, 1);
 
@@ -64,16 +66,16 @@ fn parse_input(input: &str) -> IResult<&str, Map> {
     }
     storage.append(&mut vec![border_cell.clone(); width]);
 
-    let heights = Linear2DArray::new(storage, width);
+    let mut heights = Linear2DArray::new(storage, width);
+    heights[end].best_path_length = Some(0);
     Ok(("", Map { heights, start, end }))
 }
 
-fn run_astar_algorithm<Res, Post: FnOnce((Vec<Index2D>, usize))-> Res> (heights: &Linear2DArray<Cell>, start: Index2D, end: Index2D, post: Post) -> Option<Res>
+fn run_astar_algorithm(heights: &Linear2DArray<Cell>, start: Index2D, end: Index2D) -> Option<Vec<Index2D>>
 {
     let astar_result = astar(&start,
           |idx| {
               let mut scratch = Vec::with_capacity(4);
-
 
               for d in ALL {
                   let this_height = heights[*idx].height;
@@ -86,34 +88,38 @@ fn run_astar_algorithm<Res, Post: FnOnce((Vec<Index2D>, usize))-> Res> (heights:
               scratch
           },
           |idx| idx.max_distance(end),
-          |idx| *idx == end);
-    astar_result.map(post)
+          |idx| heights[*idx].best_path_length.is_some());
+
+    astar_result.map(|tpl|tpl.0)
 }
 
+fn include_into_map(map: &mut Map, path: Vec<Index2D>) {
+    let terminating_index = *path.last().expect("terminating into known length");
+    let mut terminating_known_length = map.heights[terminating_index].best_path_length.expect("terminating into known length");
 
-fn last_a_in_path(heights: &Linear2DArray<Cell>, path: Vec<Index2D>) -> usize {
-    for idx in (0..path.len()).rev() {
-        if heights[path[idx]].height == 1 {
-            return path.len() - idx
-        }
+    for index in path.iter().rev().skip(1) {
+        terminating_known_length += 1;
+        map.heights[*index].best_path_length = Some(terminating_known_length)
     }
 
-    unreachable!()
 }
 
-fn solve_problem(map: Map) -> (usize, usize) {
-    let path1 = run_astar_algorithm(&map.heights, map.start, map.end, |tpl|tpl.0).expect("End reachable from start");
-    let part1 = path1.len() - 1;
+fn solve_problem(mut map: Map) -> (usize, usize) {
+    let path1 = run_astar_algorithm(&map.heights, map.start, map.end).expect("End reachable from start");
+    include_into_map(&mut map, path1);
+    let part1 = map.heights[map.start].best_path_length.expect("reached start");
 
-    let mut best = last_a_in_path(&map.heights, path1);
-
+    let mut best = part1;
     for y in 1..map.heights.height - 1 {
         for x in 1..map.heights.width - 1 {
             let idx = Index2D(x, y);
             if map.heights[idx].height == 1 && best > map.end.max_distance(idx)  {
-                let from_here = run_astar_algorithm(&map.heights, idx, map.end, |tpl|tpl.1).unwrap_or(usize::MAX);
-                if from_here < best {
-                    best = from_here
+                if let Some(path_from_here) = run_astar_algorithm(&map.heights, idx, map.end) {
+                    include_into_map(&mut map, path_from_here);
+                    let length_from_here = map.heights[idx].best_path_length.expect("alternative found");
+                    if length_from_here < best {
+                        best = length_from_here
+                    }
                 }
             }
         }
