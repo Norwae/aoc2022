@@ -1,11 +1,8 @@
-use std::borrow::{Borrow, Cow};
-use std::ops::Index;
-
 use nom::IResult;
 use pathfinding::prelude::astar;
 
 use crate::util::default_solution;
-use crate::util::linear2d::{ALL, Direction, Index2D, Linear2DArray};
+use crate::util::linear2d::{ALL, Index2D, Linear2DArray};
 
 const START: i32 = 0;
 const END: i32 = 27;
