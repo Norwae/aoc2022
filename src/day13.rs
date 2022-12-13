@@ -1,13 +1,7 @@
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter, Write};
 
-use nom::branch::alt;
-use nom::bytes::complete::tag;
-use nom::character::complete::line_ending;
-use nom::combinator::map;
 use nom::IResult;
-use nom::multi::{separated_list0, separated_list1};
-use nom::sequence::{delimited, separated_pair, terminated, tuple};
 
 use crate::util::{default_solution, parse_usize};
 
