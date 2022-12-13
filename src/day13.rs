@@ -36,27 +36,29 @@ impl Display for EitherScalarOrList {
 }
 
 impl EitherScalarOrList {
-    fn evaluate_less_than_slice(left: &[Self], right: &[Self]) -> Option<Ordering>{
-        if left.is_empty() {
-            return if !right.is_empty() {
-                Some(Ordering::Less)
-            } else {
-                Some(Ordering::Equal)
+    fn evaluate_less_than_slice(mut left: &[Self], mut right: &[Self]) -> Option<Ordering>{
+        loop {
+            if left.is_empty() {
+                return if !right.is_empty() {
+                    Some(Ordering::Less)
+                } else {
+                    Some(Ordering::Equal)
+                }
+            } else if !left.is_empty() && right.is_empty() {
+                return Some(Ordering::Greater);
             }
-        } else if !left.is_empty() && right.is_empty() {
-            return Some(Ordering::Greater);
-        }
-        let x1 = &left[0];
-        let x2 = &right[0];
+            let x1 = &left[0];
+            let x2 = &right[0];
 
-        let ord_first = x1.partial_cmp(x2);
-        if let Some(choice) = ord_first {
-            if choice != Ordering::Equal {
-                return Some(choice)
+            let ord_first = x1.partial_cmp(x2);
+            if let Some(choice) = ord_first {
+                if choice != Ordering::Equal {
+                    return Some(choice)
+                }
             }
+            left = &left[1..];
+            right = &right[1..];
         }
-
-        Self::evaluate_less_than_slice(&left[1..], &right[1..])
     }
 }
 
