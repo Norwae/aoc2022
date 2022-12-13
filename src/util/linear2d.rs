@@ -129,8 +129,6 @@ impl<T> Index<Index2D> for Linear2DArray<T> {
 
     fn index(&self, index: Index2D) -> &Self::Output {
         let Index2D(x, y) = index;
-        assert!(x < self.width);
-        assert!(y < self.height);
         &self.storage[x + y * self.width]
     }
 }
@@ -138,8 +136,6 @@ impl<T> Index<Index2D> for Linear2DArray<T> {
 impl<T> IndexMut<Index2D> for Linear2DArray<T> {
     fn index_mut(&mut self, index: Index2D) -> &mut Self::Output {
         let Index2D(x, y) = index;
-        assert!(x < self.width);
-        assert!(y < self.height);
         &mut self.storage[x + y * self.width]
     }
 }
