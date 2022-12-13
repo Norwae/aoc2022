@@ -48,7 +48,6 @@ fn insert_line(storage: &mut Vec<Cell>, start: &mut Index2D, end: &mut Index2D, 
 }
 
 fn parse_input(input: &str) -> IResult<&str, Map> {
-    let mut storage = Vec::new();
     let mut start = Index2D(0, 0);
     let mut end = Index2D(0, 0);
 
@@ -56,6 +55,8 @@ fn parse_input(input: &str) -> IResult<&str, Map> {
 
     let first_line = lines.next().expect("Nonempty input");
     let width = first_line.len() + 2;
+
+    let mut storage = Vec::with_capacity(2 * input.len());
     let border_cell = Cell { height: i32::MAX };
     storage.append(&mut vec![border_cell.clone(); width]);
     insert_line(&mut storage, &mut start, &mut end, first_line, border_cell, 1);
@@ -68,7 +69,7 @@ fn parse_input(input: &str) -> IResult<&str, Map> {
     }
     storage.append(&mut vec![border_cell.clone(); width]);
 
-    let mut heights = Linear2DArray::new(storage, width);
+    let heights = Linear2DArray::new(storage, width);
     Ok(("", Map { heights, start, end }))
 }
 
