@@ -12,7 +12,7 @@ lazy_static = "1.4"
 num = "0.4"
 tokio = { version = "1.21", features = ["full"] }
 pathfinding = "4.0"
-itertools = "0.10"
+smallvec = "1.10"
 
 [dev-dependencies]
 criterion = "0.4"
