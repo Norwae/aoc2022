@@ -33,8 +33,11 @@ fn day12_full(c: &mut Criterion) {
 fn day13_full(c: &mut Criterion) {
     c.bench_function("day13_full", |bencher| bencher.iter(||day13::benchmark_full(DAY13_INPUT)));
 }
+fn day13_parse(c: &mut Criterion) {
+    c.bench_function("day13_parse", |bencher| bencher.iter(||day13::benchmark_parse(DAY13_INPUT)));
+}
 
-criterion_group!(benches, day7_full, day8_full, day9_parse, day9_full, day10_full, day11_parse, day11_full, day12_full, day13_full);
+criterion_group!(benches, day7_full, day8_full, day9_parse, day9_full, day10_full, day11_parse, day11_full, day12_full, day13_full, day13_parse);
 criterion_main!(benches);
 
 const DAY7_INPUT: &'static str = "$ cd /
