@@ -79,48 +79,46 @@ impl PartialOrd for EitherScalarOrList {
     }
 }
 
-#[derive(Debug)]
-struct PacketPair(EitherScalarOrList, EitherScalarOrList);
-
-
-fn scalar(input: &str) -> IResult<&str, EitherScalarOrList> {
-    map(parse_usize, |value| EitherScalarOrList::Scalar(value))(input)
+fn parse_single(rest: &str) -> (&str,EitherScalarOrList) {
+    if rest.starts_with('[') {
+        let (rest, contents) = parse_list_contents(rest);
+        (rest, EitherScalarOrList::List(contents))
+    } else {
+        let (rest, nr) = parse_usize(rest).expect("usize");
+        (rest, EitherScalarOrList::Scalar(nr))
+    }
 }
 
-fn list(input: &str) -> IResult<&str, EitherScalarOrList> {
-    map(
-        delimited(
-            tag("["),
-            separated_list0(tag(","), either_scalar_or_list),
-            tag("]"),
-        ),
-        |vec| EitherScalarOrList::List(vec),
-    )(input)
+fn parse_list_contents(mut rest: &str) -> (&str, Vec<EitherScalarOrList>) {
+    let mut accu = Vec::new();
+    if rest.starts_with("[]") {
+        (&rest[2..], accu)
+    } else {
+        while !rest.starts_with(']') {
+            let (rest2, next) = parse_single(&rest[1..]);
+            accu.push(next);
+            rest = rest2
+        }
+
+        (&rest[1..], accu)
+    }
 }
 
-fn either_scalar_or_list(input: &str) -> IResult<&str, EitherScalarOrList> {
-    alt((scalar, list))(input)
+
+fn parse(input: &str) -> IResult<&str, Vec<EitherScalarOrList>> {
+    Ok(("", input.lines().filter(|s|!s.is_empty()).map(|line|parse_single(line).1).collect()))
 }
 
-fn packet(input: &str) -> IResult<&str, PacketPair> {
-    map(separated_pair(list, line_ending, list), |(first, second)| PacketPair(first, second))(input)
-}
-
-fn parse(input: &str) -> IResult<&str, Vec<PacketPair>> {
-    terminated(separated_list1(tuple((line_ending, line_ending)), packet),line_ending)(input)
-}
-
-fn solve_input(input: Vec<PacketPair>) -> (usize, usize) {
+fn solve_input(mut input: Vec<EitherScalarOrList>) -> (usize, usize) {
     let mut sum = 0;
-    for i in 0..input.len() {
-        if input[i].0 < input[i].1 {
-            sum += 1 + i;
+    for i in (0..input.len()).step_by(2) {
+        if input[i] < input[i + 1] {
+            sum += 1 + i / 2;
         }
     }
 
     let divider1 = EitherScalarOrList::List(vec![EitherScalarOrList::List(vec![EitherScalarOrList::Scalar(2)])]);
     let divider2 = EitherScalarOrList::List(vec![EitherScalarOrList::List(vec![EitherScalarOrList::Scalar(6)])]);
-    let mut input = input.into_iter().flat_map(|p|[p.0, p.1]).collect::<Vec<_>>();
     input.push(divider1.clone());
     input.push(divider2.clone());
     input.sort();
