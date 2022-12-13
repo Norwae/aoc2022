@@ -94,6 +94,7 @@ fn parse_list_contents(mut rest: &str) -> (&str, Vec<EitherScalarOrList>) {
     if rest.starts_with("[]") {
         (&rest[2..], accu)
     } else {
+        accu = Vec::with_capacity(10);
         while !rest.starts_with(']') {
             let (rest2, next) = parse_single(&rest[1..]);
             accu.push(next);
