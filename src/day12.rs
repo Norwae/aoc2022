@@ -87,9 +87,7 @@ fn run_astar_algorithm(heights: &Linear2DArray<Cell>, start: Index2D, end: Index
             }
         }
         scratch
-    },
-                             |idx| idx.max_distance(end),
-                             |idx| *idx == end);
+    }, |idx| idx.max_distance(end), |idx| *idx == end);
 
     astar_result.expect("A* found path").1
 }
