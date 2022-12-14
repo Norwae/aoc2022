@@ -1,4 +1,4 @@
-use std::cmp::{max, min};
+use std::cmp::max;
 use itertools::Itertools;
 use nom::bytes::complete::tag;
 use nom::character::complete::line_ending;
@@ -6,7 +6,7 @@ use nom::combinator::map;
 use nom::IResult;
 use nom::multi::{many1, separated_list1};
 use nom::sequence::{separated_pair, terminated};
-use crate::util::linear2d::{Direction, Index2D, Linear2DArray};
+use crate::util::linear2d::{Index2D, Linear2DArray};
 use crate::util::{default_solution, parse_usize};
 use crate::util::linear2d::Direction::{EastToWest, NorthToSouth, SouthToNorth, WestToEast};
 
@@ -19,7 +19,7 @@ enum Tile {
 
 const ORIGIN: Index2D = Index2D(500, 0);
 const LINE_WIDTH: usize = 1000;
-const SAFE_HEIGHT: usize = 200;
+const SAFE_HEIGHT: usize = 256;
 
 #[derive(Debug)]
 struct Problem {
@@ -57,7 +57,7 @@ impl Problem {
     fn drop_grain(&mut self) -> bool {
         loop {
             if let Some(last_floating) = self.trace.last() {
-                if last_floating.1 == self.state.height - 1{
+                if last_floating.1 == self.state.height - 1 {
                     return false; // dropping out of bottom
                 }
 
@@ -74,7 +74,7 @@ impl Problem {
         }
     }
 
-    fn draw_line(&mut self, mut from: Index2D, mut to: Index2D, contents: Tile) {
+    fn draw_line(&mut self, mut from: Index2D, to: Index2D, contents: Tile) {
         // drawing a new line invalidates pathfinding cache
         self.trace.truncate(1);
 
@@ -122,6 +122,8 @@ fn parse(input: &str) -> IResult<&str, (Problem, usize)> {
                     problem.draw_line(*from, *to, Tile::Rock)
                 }
             }
+
+            problem.state.truncate_height(floor_y + 1);
 
             (problem, floor_y)
         },

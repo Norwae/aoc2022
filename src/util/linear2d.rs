@@ -65,6 +65,12 @@ impl<T> Linear2DArray<T> {
         self.storage.iter()
     }
 
+    pub fn truncate_height(&mut self, new_height: usize) {
+        assert!(new_height <= self.height);
+
+        self.storage.truncate(new_height * self.width);
+        self.height = new_height;
+    }
 
     pub fn indices(&self) -> impl Iterator<Item=Index2D> {
         struct Iter {
