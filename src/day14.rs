@@ -76,7 +76,7 @@ impl Problem {
 
     fn draw_line(&mut self, mut from: Index2D, mut to: Index2D, contents: Tile) {
         // drawing a new line invalidates pathfinding cache
-        self.trace = vec![ORIGIN];
+        self.trace.truncate(1);
 
         let direction = if from.0 < to.0 {
             WestToEast
